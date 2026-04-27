@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class UserHomeScreen extends StatelessWidget {
-  const UserHomeScreen({super.key});
+class AlumnoHomeScreen extends StatelessWidget {
+  const AlumnoHomeScreen({super.key});
 
   void _logout(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(
@@ -17,10 +17,9 @@ class UserHomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFEAF6FF),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text("Mis Juegos"),
+        title: const Text("Juegos"),
         actions: [
-
-          /// FOTO PERFIL
+          /// PERFIL
           GestureDetector(
             onTap: () {
               Navigator.pushNamed(context, '/userProfile');
@@ -57,82 +56,78 @@ class UserHomeScreen extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 15,
           mainAxisSpacing: 15,
-          childAspectRatio: 1,
+          childAspectRatio: 1.1,
           children: [
-
-            _gameCard(
-              context,
-              Icons.lightbulb,
-              "Idea\nPrincipal",
-            ),
-
-            _gameCard(
-              context,
-              Icons.timer,
-              "Preguntas\nRápidas",
-            ),
-
-            _gameCard(
-              context,
-              Icons.auto_awesome,
-              "Palabras\nClave",
-            ),
+            _gameCard(context, Icons.lightbulb, "Idea\nPrincipal"),
+            _gameCard(context, Icons.timer, "Preguntas\nRápidas"),
+            _gameCard(context, Icons.auto_awesome, "Palabras\nClave"),
           ],
         ),
       ),
     );
   }
 
- Widget _gameCard(BuildContext context, IconData icon, String title) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => GameScreen(title: title),
-        ),
-      );
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 3),
-          )
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: Colors.blueAccent),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+
+  Widget _gameCard(BuildContext context, IconData icon, String title) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GameScreen(title: title),
           ),
-        ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 3),
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 38, color: Colors.blueAccent),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 }
 
+/// PANTALLA DE JUEGO
 class GameScreen extends StatelessWidget {
   final String title;
   const GameScreen({super.key, required this.title});
+
+  void _logout(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(title),
         actions: [
           IconButton(
@@ -143,13 +138,7 @@ class GameScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/',
-                (route) => false,
-              );
-            },
+            onPressed: () => _logout(context),
           ),
         ],
       ),

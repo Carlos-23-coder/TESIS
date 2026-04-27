@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "577934350579",
+    "project_id": "lectoplay-a5124",
+    "storage_bucket": "lectoplay-a5124.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577934350579:android:fbaa63dca52ef7c6ed3f86",
+        "android_client_info": {
+          "package_name": "com.example.lectoplay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJyBxiOuYJ0JAWn80cEMNhmQ4gBy19n6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

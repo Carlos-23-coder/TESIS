@@ -20,20 +20,48 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
   }
 
+  /// CREACIÓN INICIAL
   Future _createDB(Database db, int version) async {
-  await db.execute('''
-    CREATE TABLE users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      email TEXT NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL
-    )
-  ''');
-}
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL
+      )
+    ''');
+
+    ///  Usuario tutor por defecto
+    await db.insert('users', {
+      'username': 'tutor',
+      'email': 'tutor@lectoplay.com',
+      'password': '12345678',
+      'role': 'Tutor',
+    });
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+
+    
+    if (oldVersion < 2) {
+   
+      final result = await db.rawQuery("PRAGMA table_info(users)");
+      final columns = result.map((e) => e['name']).toList();
+
+      if (!columns.contains('username')) {
+        await db.execute("ALTER TABLE users ADD COLUMN username TEXT");
+      }
+
+      if (!columns.contains('role')) {
+        await db.execute("ALTER TABLE users ADD COLUMN role TEXT");
+      }
+    }
+  }
 }

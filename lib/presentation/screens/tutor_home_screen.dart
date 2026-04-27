@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AdminHomeScreen extends StatelessWidget {
-  const AdminHomeScreen({super.key});
+class TutorHomeScreen extends StatelessWidget {
+  const TutorHomeScreen({super.key});
 
   void _logout(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(
@@ -16,7 +16,7 @@ class AdminHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text("Panel Administrador"),
+        title: const Text("Panel del Tutor"),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -35,6 +35,7 @@ class AdminHomeScreen extends StatelessWidget {
 
           const SizedBox(height: 30),
 
+          /// FOTO DE PERFIL
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey.shade300,
@@ -43,23 +44,35 @@ class AdminHomeScreen extends StatelessWidget {
 
           const SizedBox(height: 30),
 
-          _adminButton(context, "Premios"),
-          _adminButton(context, "Mi Grupo"),
-          _adminButton(context, "Mi Perfil"),
+          /// BOTONES
+          _tutorButton(context, "Premios"),
+          _tutorButton(context, "Mi grupo"),
+          _tutorButton(context, "Mi perfil"),
         ],
       ),
     );
   }
 
-  Widget _adminButton(BuildContext context, String text) {
+  /// BOTÓN REUTILIZABLE
+  Widget _tutorButton(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 40),
       child: SizedBox(
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
-          onPressed: () {},
-          child: Text(text, style: const TextStyle(fontSize: 18)),
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          onPressed: () {
+            // Luego conectamos navegación real
+          },
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 18),
+          ),
         ),
       ),
     );

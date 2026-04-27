@@ -1,3 +1,4 @@
+import '../../data/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/user_repository.dart';
@@ -16,9 +17,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
   final UserRepository _userRepository = UserRepository();
 
-  String _role = "Usuario";
+  /// 🔥 NUEVO
+  final FirebaseService _firebaseService = FirebaseService();
+
+  String _role = "Alumno";
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -40,6 +45,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool get isPasswordValid =>
       hasUpper && hasLower && hasNumber && hasMinLength;
 
+  void _clearForm() {
+    _usernameController.clear();
+    _emailController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+
+    setState(() {
+      hasUpper = false;
+      hasLower = false;
+      hasNumber = false;
+      hasMinLength = false;
+      _role = "Alumno";
+    });
+  }
+
   void _register() async {
 
     if (!_formKey.currentState!.validate()) return;
@@ -54,8 +74,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    final email = _emailController.text.trim();
+
     final emailExists =
-        await _userRepository.emailExists(_emailController.text);
+        await _userRepository.emailExists(email);
 
     if (emailExists) {
       _showError("El correo ya está registrado.");
@@ -64,12 +86,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final user = User(
       username: _usernameController.text.trim(),
-      email: _emailController.text.trim(),
+      email: email,
       password: _passwordController.text.trim(),
       role: _role,
     );
 
+    /// 🔥 GUARDAR EN SQLITE
     await _userRepository.createUser(user);
+
+    /// 🔥 GUARDAR EN FIREBASE (NUEVO)
+    await _firebaseService.createUser(
+      email: user.email,
+      username: user.username,
+      role: user.role,
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -83,6 +113,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+
+    _clearForm();
 
     Future.delayed(const Duration(seconds: 1), () {
       Navigator.pushReplacementNamed(context, '/login');
@@ -158,9 +190,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       TextFormField(
                         controller: _usernameController,
-                        decoration: _inputDecoration("Usuario"),
+                        decoration: _inputDecoration("Nombre"),
                         validator: (v) =>
-                            v!.isEmpty ? "Ingrese usuario" : null,
+                            v!.isEmpty ? "Ingrese su nombre" : null,
                       ),
 
                       const SizedBox(height: 15),
@@ -184,12 +216,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       DropdownButtonFormField<String>(
                         value: _role,
-                        decoration: _inputDecoration("Tipo de usuario"),
+                        decoration: _inputDecoration("Tipo de cuenta"),
                         items: const [
                           DropdownMenuItem(
-                              value: "Admin", child: Text("Admin")),
+                              value: "Tutor", child: Text("Tutor")),
                           DropdownMenuItem(
-                              value: "Usuario", child: Text("Usuario")),
+                              value: "Alumno", child: Text("Alumno")),
                         ],
                         onChanged: (value) {
                           setState(() => _role = value!);
@@ -219,14 +251,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 10),
 
-                      _buildRequirement(
-                          "Mínimo 8 caracteres", hasMinLength),
-                      _buildRequirement(
-                          "Una mayúscula", hasUpper),
-                      _buildRequirement(
-                          "Una minúscula", hasLower),
-                      _buildRequirement(
-                          "Un número", hasNumber),
+                      _buildRequirement("Mínimo 8 caracteres", hasMinLength),
+                      _buildRequirement("Una mayúscula", hasUpper),
+                      _buildRequirement("Una minúscula", hasLower),
+                      _buildRequirement("Un número", hasNumber),
 
                       const SizedBox(height: 15),
 
@@ -253,14 +281,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(15),
-                            ),
-                          ),
                           onPressed: _register,
                           child: const Text("Registrar"),
                         ),

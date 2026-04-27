@@ -15,52 +15,53 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final UserRepository _userRepository = UserRepository();
 
-  String _role = "Usuario";
+  String _role = "Alumno";
   bool _obscurePassword = true;
 
   void _login() async {
 
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  final user = await _userRepository.login(
-    _usernameController.text.trim(),
-    _passwordController.text.trim(),
-    _role,
-  );
-
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Colors.red,
-        content: Text("Datos incorrectos"),
-      ),
+    final user = await _userRepository.login(
+      _usernameController.text.trim(),
+      _passwordController.text.trim(),
+      _role,
     );
-    return;
-  }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      backgroundColor: Colors.green,
-      content: Row(
-        children: [
-          Icon(Icons.check_circle, color: Colors.white),
-          SizedBox(width: 10),
-          Text("¡Bienvenido!"),
-        ],
-      ),
-    ),
-  );
-
-  Future.delayed(const Duration(seconds: 1), () {
-
-    if (user.role == "Admin") {
-      Navigator.pushReplacementNamed(context, '/admin');
-    } else {
-      Navigator.pushReplacementNamed(context, '/user');
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Datos incorrectos"),
+        ),
+      );
+      return;
     }
 
-  });
-}
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.green,
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 10),
+            Text("¡Bienvenido!"),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 1), () {
+
+      if (user.role == "Tutor") {
+        Navigator.pushReplacementNamed(context, '/tutor');
+      } else {
+        Navigator.pushReplacementNamed(context, '/alumno');
+      }
+
+    });
+  }
+
   InputDecoration _inputDecoration(String label, {Widget? suffix}) {
     return InputDecoration(
       labelText: label,
@@ -123,26 +124,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      /// Usuario
+                      /// Nombre (antes usuario)
                       TextFormField(
                         controller: _usernameController,
                         style: const TextStyle(fontSize: 18),
-                        decoration: _inputDecoration("Usuario"),
+                        decoration: _inputDecoration("Nombre"),
                         validator: (value) =>
-                            value!.isEmpty ? "Ingrese su usuario" : null,
+                            value!.isEmpty ? "Ingrese su nombre" : null,
                       ),
 
                       const SizedBox(height: 20),
 
-                      /// Tipo Usuario
+                      /// Tipo de cuenta
                       DropdownButtonFormField<String>(
                         value: _role,
-                        decoration: _inputDecoration("Tipo de usuario"),
+                        decoration: _inputDecoration("Tipo de cuenta"),
                         items: const [
                           DropdownMenuItem(
-                              value: "Admin", child: Text("Admin")),
+                              value: "Tutor", child: Text("Tutor")),
                           DropdownMenuItem(
-                              value: "Usuario", child: Text("Usuario")),
+                              value: "Alumno", child: Text("Alumno")),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -153,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 20),
 
-                      /// Contraseña con OJO
+                      /// Contraseña con ojo
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -179,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      /// BOTÓN GRANDE
+                      /// BOTÓN
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -200,6 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 20),
 
+                      /// Ir a registro
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacementNamed(
