@@ -19,6 +19,7 @@ class IdeaLevel {
 
 final List<IdeaLevel> ideaLevels = [
 
+  /// ⭐ NIVEL 1
   IdeaLevel(
     level: 1,
 
@@ -36,6 +37,39 @@ final List<IdeaLevel> ideaLevels = [
       "Lucas encontró y ayudó a un perrito perdido",
       "Lucas fue a jugar al parque",
       "El perro quería dormir",
+    ],
+
+    correctAnswer: 0,
+  ),
+
+  /// ⭐ NIVEL 2
+  IdeaLevel(
+    level: 2,
+
+    story:
+        "María y su hermano Luis fueron al parque una tarde soleada. "
+        "Mientras caminaban, observaron que muchos niños jugaban felices "
+        "en los columpios y resbaladeras. María llevaba una pelota roja y "
+        "Luis una cometa azul. Decidieron jugar primero con la pelota, pero "
+        "de pronto comenzó a soplar un viento muy fuerte. Entonces Luis tuvo "
+        "la idea de volar su cometa. Los dos corrieron por el césped mientras "
+        "la cometa subía cada vez más alto en el cielo. Después de un rato, "
+        "se sentaron bajo un árbol para comer unas galletas y beber jugo. "
+        "Antes de regresar a casa, ayudaron a recoger la basura que otras "
+        "personas habían dejado en el parque.",
+
+    image: 'assets/images/cuento2.png',
+
+    question:
+        "¿Cuál es la idea principal de la historia?",
+
+    options: [
+
+      "María y Luis disfrutaron jugando y ayudando en el parque.",
+
+      "La cometa azul podía volar muy alto.",
+
+      "Los niños comieron galletas debajo de un árbol.",
     ],
 
     correctAnswer: 0,

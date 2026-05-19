@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../games/idea_principal/idea_principal_map.dart';
+import '../profile/student_profile_screen.dart';
 
 class AlumnoHomeScreen extends StatelessWidget {
   const AlumnoHomeScreen({super.key});
@@ -23,18 +25,28 @@ class AlumnoHomeScreen extends StatelessWidget {
 
         actions: [
 
-          /// PERFIL
+          /// 👤 PERFIL
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, '/userProfile');
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const StudentProfileScreen(),
+                ),
+              );
             },
 
             child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(
+                horizontal: 10,
+              ),
 
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.white,
+
                 child: Icon(
                   Icons.person,
                   color: Colors.blue,
@@ -43,16 +55,19 @@ class AlumnoHomeScreen extends StatelessWidget {
             ),
           ),
 
-          /// AJUSTES
+          /// ⚙️ AJUSTES
           IconButton(
             icon: const Icon(Icons.settings),
 
             onPressed: () {
-              Navigator.pushNamed(context, '/settings');
+              Navigator.pushNamed(
+                context,
+                '/settings',
+              );
             },
           ),
 
-          /// LOGOUT
+          /// 🚪 LOGOUT
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),
@@ -71,18 +86,21 @@ class AlumnoHomeScreen extends StatelessWidget {
 
           children: [
 
+            /// IDEA PRINCIPAL
             _gameCard(
               context,
               Icons.lightbulb,
               "Idea\nPrincipal",
             ),
 
+            /// PREGUNTAS RÁPIDAS
             _gameCard(
               context,
               Icons.timer,
               "Preguntas\nRápidas",
             ),
 
+            /// PALABRAS CLAVE
             _gameCard(
               context,
               Icons.auto_awesome,
@@ -94,29 +112,35 @@ class AlumnoHomeScreen extends StatelessWidget {
     );
   }
 
-  /// 🎮 TARJETAS DE JUEGOS
+  /// 🎮 TARJETA JUEGO
   Widget _gameCard(
     BuildContext context,
     IconData icon,
     String title,
   ) {
+
     return GestureDetector(
+
       onTap: () {
 
-        /// ✅ SOLO FUNCIONA IDEA PRINCIPAL
+        /// ✅ IDEA PRINCIPAL
         if (title == "Idea\nPrincipal") {
 
           Navigator.push(
             context,
+
             MaterialPageRoute(
-              builder: (_) => const IdeaPrincipalMap(),
+              builder: (_) =>
+                  const IdeaPrincipalMap(),
             ),
           );
 
         } else {
 
           /// 🚧 JUEGOS FUTUROS
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+
             const SnackBar(
               content: Text(
                 "Este juego estará disponible próximamente 😊",
@@ -127,11 +151,15 @@ class AlumnoHomeScreen extends StatelessWidget {
       },
 
       child: Container(
+
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+
+          borderRadius:
+              BorderRadius.circular(18),
 
           boxShadow: const [
+
             BoxShadow(
               color: Colors.black12,
               blurRadius: 4,
@@ -141,7 +169,8 @@ class AlumnoHomeScreen extends StatelessWidget {
         ),
 
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center,
 
           children: [
 

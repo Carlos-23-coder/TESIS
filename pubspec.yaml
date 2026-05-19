@@ -13,11 +13,22 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+
+  # LOCAL
   sqflite: ^2.4.2
   path: ^1.9.1
   path_provider: ^2.1.5
+
+  # FIREBASE
   firebase_core: ^4.7.0
+  firebase_auth: ^6.1.0
   cloud_firestore: ^6.3.0
+  firebase_storage: ^13.0.0
+
+  # IMÁGENES
+  image_picker: ^1.1.2
+
+  # AUDIO
   audioplayers: ^6.0.0
 
 dev_dependencies:

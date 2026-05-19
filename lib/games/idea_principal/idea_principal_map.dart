@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/game_engine/game_progress.dart';
+import '../../data/repositories/progress_repository.dart';
+
 import 'idea_principal_level.dart';
 
 class IdeaPrincipalMap extends StatefulWidget {
@@ -14,6 +17,61 @@ class IdeaPrincipalMap extends StatefulWidget {
 
 class _IdeaPrincipalMapState
     extends State<IdeaPrincipalMap> {
+
+  /// 🔥 REPOSITORIO
+  final ProgressRepository
+      _progressRepository =
+          ProgressRepository();
+
+  /// 👤 USUARIO ACTUAL
+  final user =
+      FirebaseAuth.instance.currentUser;
+
+  /// ⭐ ESTRELLAS
+  Map<int, int> starsMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadProgress();
+  }
+
+  /// 📚 CARGAR PROGRESO
+  Future<void> loadProgress() async {
+
+    if (user == null) return;
+
+    final progress =
+        await _progressRepository
+            .getStudentProgress(
+      user!.email!,
+    );
+
+    Map<int, int> loadedStars = {};
+
+    for (var item in progress) {
+
+      final int level =
+          item["level"] ?? 1;
+
+      final int stars =
+          item["stars"] ?? 0;
+
+      /// ⭐ GUARDAR EN MAPA
+      loadedStars[level - 1] = stars;
+
+      /// 💾 GUARDAR LOCAL
+      GameProgress.saveStars(
+        level - 1,
+        stars,
+      );
+    }
+
+    setState(() {
+      starsMap = loadedStars;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +113,18 @@ class _IdeaPrincipalMapState
 
     final level = index + 1;
 
-    /// ⭐ ESTRELLAS
+    /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
+        starsMap[index] ??
         GameProgress.getStars(index);
 
-    /// 🔓 DESBLOQUEAR
+    /// 🔓 DESBLOQUEAR NIVEL
     final bool unlocked =
         level == 1 ||
-        GameProgress.getStars(index - 1) > 0;
+        (
+          starsMap[index - 1] ??
+          GameProgress.getStars(index - 1)
+        ) > 0;
 
     return Padding(
 
@@ -75,7 +137,7 @@ class _IdeaPrincipalMapState
 
         children: [
 
-          /// CAMINO
+          /// 🛣️ CAMINO
           if (index != 0)
 
             Container(
@@ -92,7 +154,7 @@ class _IdeaPrincipalMapState
               ),
             ),
 
-          /// BOTÓN NIVEL
+          /// 🎮 BOTÓN NIVEL
           GestureDetector(
 
             onTap: unlocked
@@ -111,8 +173,8 @@ class _IdeaPrincipalMapState
                       ),
                     );
 
-                    /// 🔥 ACTUALIZAR MAPA
-                    setState(() {});
+                    /// 🔥 RECARGAR PROGRESO
+                    await loadProgress();
                   }
                 : null,
 

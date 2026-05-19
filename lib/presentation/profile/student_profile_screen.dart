@@ -1,0 +1,381 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../data/repositories/profile_repository.dart';
+import '../../data/repositories/progress_repository.dart';
+
+class StudentProfileScreen
+    extends StatefulWidget {
+
+  const StudentProfileScreen({
+    super.key,
+  });
+
+  @override
+  State<StudentProfileScreen>
+      createState() =>
+          _StudentProfileScreenState();
+}
+
+class _StudentProfileScreenState
+    extends State<StudentProfileScreen> {
+
+  final ProfileRepository
+      _profileRepository =
+          ProfileRepository();
+
+  final ProgressRepository
+      _progressRepository =
+          ProgressRepository();
+
+  String studentName = "Alumno";
+  String email = "Sin correo";
+  String? photoUrl;
+
+  int totalStars = 0;
+
+  /// 🔥 USUARIO ACTUAL
+  final user =
+      FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadProfile();
+    loadStars();
+  }
+
+  /// ⭐ CARGAR ESTRELLAS REALES
+  Future<void> loadStars() async {
+
+    if (user == null) return;
+
+    final progress =
+        await _progressRepository
+            .getStudentProgress(
+      user!.email!,
+    );
+
+    int stars = 0;
+
+    for (var item in progress) {
+
+      stars +=
+          (item["stars"] ?? 0)
+              as int;
+    }
+
+    setState(() {
+      totalStars = stars;
+    });
+  }
+
+  /// 👤 CARGAR PERFIL REAL
+  Future<void> loadProfile() async {
+
+    if (user == null) return;
+
+    final data =
+        await _profileRepository
+            .getProfile(
+      user!.email!,
+    );
+
+    if (data != null) {
+
+      setState(() {
+
+        studentName =
+            data["username"] ??
+            "Alumno";
+
+        email =
+            data["email"] ??
+            "Sin correo";
+
+        photoUrl =
+            data["photoUrl"];
+      });
+    }
+  }
+
+  /// 📷 CAMBIAR FOTO
+  Future<void> changePhoto() async {
+
+    if (user == null) return;
+
+    final ImagePicker picker =
+        ImagePicker();
+
+    final XFile? image =
+        await showModalBottomSheet<XFile>(
+
+      context: context,
+
+      builder: (_) {
+
+        return SafeArea(
+
+          child: Wrap(
+
+            children: [
+
+              /// 📸 CÁMARA
+              ListTile(
+                leading:
+                    const Icon(
+                  Icons.camera_alt,
+                ),
+
+                title: const Text(
+                  "Tomar Foto",
+                ),
+
+                onTap: () async {
+
+                  final photo =
+                      await picker.pickImage(
+                    source:
+                        ImageSource.camera,
+                    imageQuality: 70,
+                  );
+
+                  Navigator.pop(
+                    context,
+                    photo,
+                  );
+                },
+              ),
+
+              /// 🖼️ GALERÍA
+              ListTile(
+                leading:
+                    const Icon(
+                  Icons.photo,
+                ),
+
+                title: const Text(
+                  "Abrir Galería",
+                ),
+
+                onTap: () async {
+
+                  final photo =
+                      await picker.pickImage(
+                    source:
+                        ImageSource.gallery,
+                    imageQuality: 70,
+                  );
+
+                  Navigator.pop(
+                    context,
+                    photo,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (image == null) return;
+
+    final file =
+        File(image.path);
+
+    /// 🔥 SUBIR IMAGEN
+    final url =
+        await _profileRepository
+            .uploadProfileImage(
+      user!.email!,
+      file,
+    );
+
+    /// 💾 GUARDAR URL EN FIRESTORE
+    await _profileRepository
+        .savePhotoUrl(
+      user!.email!,
+      url,
+    );
+
+    setState(() {
+      photoUrl = url;
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          "✅ Foto actualizada",
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+
+      backgroundColor:
+          const Color(0xFFEAF6FF),
+
+      appBar: AppBar(
+        title: const Text(
+          "Mi Perfil",
+        ),
+      ),
+
+      body: SingleChildScrollView(
+
+        padding:
+            const EdgeInsets.all(20),
+
+        child: Column(
+
+          children: [
+
+            const SizedBox(height: 20),
+
+            /// 📷 FOTO PERFIL
+            GestureDetector(
+
+              onTap: changePhoto,
+
+              child: CircleAvatar(
+
+                radius: 70,
+
+                backgroundColor:
+                    Colors.white,
+
+                backgroundImage:
+                    photoUrl != null
+                        ? NetworkImage(
+                            photoUrl!,
+                          )
+                        : null,
+
+                child:
+                    photoUrl == null
+                        ? const Icon(
+                            Icons.person,
+                            size: 70,
+                            color:
+                                Colors.blue,
+                          )
+                        : null,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            const Text(
+              "Toca la foto para cambiarla",
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            /// 👤 NOMBRE
+            Card(
+
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+              ),
+
+              child: ListTile(
+
+                leading: const Icon(
+                  Icons.person,
+                  color: Colors.blue,
+                ),
+
+                title: const Text(
+                  "Nombre",
+                ),
+
+                subtitle:
+                    Text(studentName),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// 📧 CORREO
+            Card(
+
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+              ),
+
+              child: ListTile(
+
+                leading: const Icon(
+                  Icons.email,
+                  color: Colors.orange,
+                ),
+
+                title: const Text(
+                  "Correo",
+                ),
+
+                subtitle:
+                    Text(email),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// ⭐ ESTRELLAS
+            Card(
+
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
+              ),
+
+              child: ListTile(
+
+                leading: const Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+
+                title: const Text(
+                  "Estrellas Totales",
+                ),
+
+                subtitle: Text(
+                  "$totalStars ⭐",
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

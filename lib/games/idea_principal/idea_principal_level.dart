@@ -1,6 +1,11 @@
 import '../../core/game_engine/game_progress.dart';
 import 'package:flutter/material.dart';
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../data/models/progress_model.dart';
+import '../../data/repositories/progress_repository.dart';
 
 import 'idea_principal_data.dart';
 import 'widgets/level_result_dialog.dart';
@@ -22,12 +27,22 @@ class IdeaPrincipalLevel extends StatefulWidget {
 class _IdeaPrincipalLevelState
     extends State<IdeaPrincipalLevel> {
 
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer =
+      AudioPlayer();
+
+  final ProgressRepository
+      _progressRepository =
+          ProgressRepository();
+
+  /// 🔥 USUARIO ACTUAL
+  final user =
+      FirebaseAuth.instance.currentUser;
 
   int? selectedAnswer;
+
   bool answered = false;
 
-  /// ⭐ INTENTOS DEL NIVEL
+  /// ⭐ INTENTOS
   int attempts = 0;
 
   Future<void> playSuccess() async {
@@ -48,14 +63,16 @@ class _IdeaPrincipalLevelState
 
     if (answered) return;
 
-    final level = ideaLevels[widget.levelIndex];
+    final level =
+        ideaLevels[widget.levelIndex];
 
     setState(() {
+
       selectedAnswer = index;
       answered = true;
     });
 
-    /// ⭐ AUMENTAR INTENTOS
+    /// ⭐ SUMAR INTENTO
     attempts++;
 
     final bool isCorrect =
@@ -77,13 +94,28 @@ class _IdeaPrincipalLevelState
       earnedStars = 1;
     }
 
-    /// 💾 GUARDAR ESTRELLAS
+    /// 💾 GUARDAR PROGRESO
     if (isCorrect) {
 
+      /// ⭐ GUARDADO LOCAL
       GameProgress.saveStars(
         widget.levelIndex,
         earnedStars,
       );
+
+      /// 🔥 FIREBASE
+      if (user != null) {
+
+        final progress = ProgressModel(
+          userId: user!.email!,
+          level: widget.levelIndex + 1,
+          stars: earnedStars,
+          game: "idea_principal",
+        );
+
+        await _progressRepository
+            .saveProgress(progress);
+      }
     }
 
     /// 🔊 SONIDOS
@@ -96,14 +128,14 @@ class _IdeaPrincipalLevelState
       await playError();
     }
 
-    /// ⏳ PEQUEÑA ESPERA
+    /// ⏳ ESPERA
     await Future.delayed(
       const Duration(milliseconds: 700),
     );
 
     if (!mounted) return;
 
-    /// 🎉 POPUP RESULTADO
+    /// 🎉 RESULTADO
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -118,6 +150,7 @@ class _IdeaPrincipalLevelState
           Navigator.pop(context);
 
           setState(() {
+
             answered = false;
             selectedAnswer = null;
           });
@@ -153,7 +186,9 @@ class _IdeaPrincipalLevelState
                 .showSnackBar(
 
               const SnackBar(
-                backgroundColor: Colors.green,
+                backgroundColor:
+                    Colors.green,
+
                 content: Text(
                   "🎉 ¡Completaste todos los niveles!",
                 ),
@@ -236,7 +271,7 @@ class _IdeaPrincipalLevelState
 
             const SizedBox(height: 20),
 
-            /// 📖 TÍTULO
+            /// 📖 TITULO
             const Text(
               "Lee la siguiente historia",
 
