@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../../data/models/user_model.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../data/services/firebase_service.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+
+  const RegisterScreen({
+    super.key,
+  });
 
   @override
   State<RegisterScreen> createState() =>
@@ -26,7 +30,8 @@ class _RegisterScreenState
   final _passwordController =
       TextEditingController();
 
-  final _confirmPasswordController =
+  /// 🔥 NUEVO PIN
+  final _pinController =
       TextEditingController();
 
   final UserRepository
@@ -40,14 +45,14 @@ class _RegisterScreenState
   String _role = "Alumno";
 
   bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  bool _obscurePin = true;
 
   bool hasUpper = false;
   bool hasLower = false;
   bool hasNumber = false;
   bool hasMinLength = false;
 
-  /// VALIDAR CONTRASEÑA
+  /// VALIDAR PASSWORD
   void _validatePassword(
     String password,
   ) {
@@ -75,12 +80,13 @@ class _RegisterScreenState
   }
 
   bool get isPasswordValid =>
+
       hasUpper &&
       hasLower &&
       hasNumber &&
       hasMinLength;
 
-  /// LIMPIAR FORMULARIO
+  /// LIMPIAR
   void _clearForm() {
 
     _usernameController.clear();
@@ -89,7 +95,7 @@ class _RegisterScreenState
 
     _passwordController.clear();
 
-    _confirmPasswordController.clear();
+    _pinController.clear();
 
     setState(() {
 
@@ -102,7 +108,7 @@ class _RegisterScreenState
     });
   }
 
-  /// REGISTRAR
+  /// REGISTRO
   void _register() async {
 
     if (!_formKey.currentState!
@@ -114,18 +120,6 @@ class _RegisterScreenState
 
       _showError(
         "La contraseña no cumple los requisitos.",
-      );
-
-      return;
-    }
-
-    if (
-      _passwordController.text !=
-      _confirmPasswordController.text
-    ) {
-
-      _showError(
-        "Las contraseñas no coinciden.",
       );
 
       return;
@@ -148,6 +142,7 @@ class _RegisterScreenState
     }
 
     final appUser = User(
+
       username:
           _usernameController.text.trim(),
 
@@ -155,6 +150,9 @@ class _RegisterScreenState
 
       password:
           _passwordController.text.trim(),
+
+      pin:
+          _pinController.text.trim(),
 
       role: _role,
     );
@@ -165,7 +163,7 @@ class _RegisterScreenState
       await _userRepository
           .createUser(appUser);
 
-      /// FIREBASE AUTH + FIRESTORE
+      /// FIREBASE
       await _firebaseService
           .createUser(
 
@@ -178,6 +176,9 @@ class _RegisterScreenState
 
         password:
             appUser.password,
+
+        pin:
+            appUser.pin,
       );
 
       if (!mounted) return;
@@ -186,10 +187,12 @@ class _RegisterScreenState
           .showSnackBar(
 
         const SnackBar(
+
           backgroundColor:
               Colors.green,
 
           content: Row(
+
             children: [
 
               Icon(
@@ -210,7 +213,9 @@ class _RegisterScreenState
       _clearForm();
 
       Future.delayed(
+
         const Duration(seconds: 1),
+
         () {
 
           Navigator
@@ -238,10 +243,12 @@ class _RegisterScreenState
         .showSnackBar(
 
       SnackBar(
+
         backgroundColor:
             Colors.red,
 
-        content: Text(message),
+        content:
+            Text(message),
       ),
     );
   }
@@ -256,14 +263,16 @@ class _RegisterScreenState
       children: [
 
         Icon(
+
           condition
               ? Icons.check_circle
               : Icons
                   .radio_button_unchecked,
 
-          color: condition
-              ? Colors.green
-              : Colors.grey,
+          color:
+              condition
+                  ? Colors.green
+                  : Colors.grey,
 
           size: 18,
         ),
@@ -289,6 +298,7 @@ class _RegisterScreenState
       fillColor: Colors.white,
 
       border: OutlineInputBorder(
+
         borderRadius:
             BorderRadius.circular(15),
       ),
@@ -310,6 +320,7 @@ class _RegisterScreenState
           gradient: LinearGradient(
 
             colors: [
+
               Color(0xFF4A90E2),
               Color(0xFF50C9C3),
             ],
@@ -333,10 +344,9 @@ class _RegisterScreenState
 
               shape:
                   RoundedRectangleBorder(
+
                 borderRadius:
-                    BorderRadius.circular(
-                  25,
-                ),
+                    BorderRadius.circular(25),
               ),
 
               elevation: 10,
@@ -344,9 +354,7 @@ class _RegisterScreenState
               child: Padding(
 
                 padding:
-                    const EdgeInsets.all(
-                  25,
-                ),
+                    const EdgeInsets.all(25),
 
                 child: Form(
 
@@ -357,13 +365,15 @@ class _RegisterScreenState
                     children: [
 
                       const Text(
+
                         "Crear Cuenta",
 
                         style: TextStyle(
+
                           fontSize: 24,
+
                           fontWeight:
-                              FontWeight
-                                  .bold,
+                              FontWeight.bold,
                         ),
                       ),
 
@@ -399,7 +409,7 @@ class _RegisterScreenState
                         height: 15,
                       ),
 
-                      /// CORREO
+                      /// EMAIL
                       TextFormField(
 
                         controller:
@@ -423,11 +433,9 @@ class _RegisterScreenState
                           }
 
                           if (!value
-                                  .contains(
-                                      "@") ||
+                                  .contains("@") ||
                               !value
-                                  .contains(
-                                      ".com")) {
+                                  .contains(".com")) {
 
                             return
                                 "Correo inválido";
@@ -442,8 +450,7 @@ class _RegisterScreenState
                       ),
 
                       /// ROL
-                      DropdownButtonFormField<
-                          String>(
+                      DropdownButtonFormField<String>(
 
                         value: _role,
 
@@ -456,19 +463,16 @@ class _RegisterScreenState
 
                           DropdownMenuItem(
                             value: "Tutor",
-                            child:
-                                Text("Tutor"),
+                            child: Text("Tutor"),
                           ),
 
                           DropdownMenuItem(
                             value: "Alumno",
-                            child:
-                                Text("Alumno"),
+                            child: Text("Alumno"),
                           ),
                         ],
 
-                        onChanged:
-                            (value) {
+                        onChanged: (value) {
 
                           setState(() {
 
@@ -481,7 +485,7 @@ class _RegisterScreenState
                         height: 15,
                       ),
 
-                      /// CONTRASEÑA
+                      /// PASSWORD
                       TextFormField(
 
                         controller:
@@ -503,10 +507,8 @@ class _RegisterScreenState
                             icon: Icon(
 
                               _obscurePassword
-                                  ? Icons
-                                      .visibility_off
-                                  : Icons
-                                      .visibility,
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                             ),
 
                             onPressed: () {
@@ -546,44 +548,63 @@ class _RegisterScreenState
                       ),
 
                       const SizedBox(
-                        height: 15,
+                        height: 20,
                       ),
 
-                      /// CONFIRMAR
+                      /// 🔥 PIN
                       TextFormField(
 
                         controller:
-                            _confirmPasswordController,
+                            _pinController,
 
                         obscureText:
-                            _obscureConfirm,
+                            _obscurePin,
+
+                        keyboardType:
+                            TextInputType.number,
 
                         decoration:
                             _inputDecoration(
 
-                          "Confirmar contraseña",
+                          "PIN (4 números)",
 
                           suffix: IconButton(
 
                             icon: Icon(
 
-                              _obscureConfirm
-                                  ? Icons
-                                      .visibility_off
-                                  : Icons
-                                      .visibility,
+                              _obscurePin
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                             ),
 
                             onPressed: () {
 
                               setState(() {
 
-                                _obscureConfirm =
-                                    !_obscureConfirm;
+                                _obscurePin =
+                                    !_obscurePin;
                               });
                             },
                           ),
                         ),
+
+                        validator: (value) {
+
+                          if (value == null ||
+                              value.isEmpty) {
+
+                            return
+                                "Ingrese un PIN";
+                          }
+
+                          if (value.length != 4) {
+
+                            return
+                                "El PIN debe tener 4 números";
+                          }
+
+                          return null;
+                        },
                       ),
 
                       const SizedBox(
@@ -602,7 +623,8 @@ class _RegisterScreenState
                           onPressed:
                               _register,
 
-                          child: const Text(
+                          child:
+                              const Text(
                             "Registrar",
                           ),
                         ),
@@ -629,10 +651,11 @@ class _RegisterScreenState
                           "¿Ya tienes cuenta? Inicia sesión",
 
                           style: TextStyle(
+
                             color: Colors.blue,
+
                             fontWeight:
-                                FontWeight
-                                    .bold,
+                                FontWeight.bold,
                           ),
                         ),
                       )

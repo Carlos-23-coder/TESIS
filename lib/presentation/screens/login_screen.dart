@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../data/repositories/user_repository.dart';
+import '../../data/services/firebase_service.dart';
 
 class LoginScreen extends StatefulWidget {
 
@@ -20,153 +19,110 @@ class _LoginScreenState
   final _formKey =
       GlobalKey<FormState>();
 
-  /// 📧 CORREO
-  final _emailController =
+  /// 👤 CORREO O USUARIO
+  final _userController =
       TextEditingController();
 
-  /// 🔒 CONTRASEÑA
+  /// 🔒 CONTRASEÑA O PIN
   final _passwordController =
       TextEditingController();
+
+  final FirebaseService
+      _firebaseService =
+          FirebaseService();
 
   String _role = "Alumno";
 
   bool _obscurePassword = true;
 
-  /// 🔥 LOGIN REAL CON FIREBASE AUTH
+  /// 🔐 LOGIN
   void _login() async {
 
     if (!_formKey.currentState!
-        .validate()) return;
+        .validate()) {
+      return;
+    }
 
-    try {
+    final result =
+        await _firebaseService.login(
 
-      /// 🔥 LOGIN FIREBASE
-      final credential =
-          await FirebaseAuth.instance
-              .signInWithEmailAndPassword(
+      identifier:
+          _userController.text.trim(),
 
-        email:
-            _emailController.text
-                .trim(),
+      passwordOrPin:
+          _passwordController.text.trim(),
 
-        password:
-            _passwordController.text
-                .trim(),
-      );
+      role: _role,
+    );
 
-      final firebaseUser =
-          credential.user;
+    /// ❌ ERROR
+    if (result == null) {
 
-      if (firebaseUser == null) {
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-
-          const SnackBar(
-
-            backgroundColor:
-                Colors.red,
-
-            content: Text(
-              "No se pudo iniciar sesión",
-            ),
-          ),
-        );
-
-        return;
-      }
-
-      /// ✅ LOGIN EXITOSO
       ScaffoldMessenger.of(context)
           .showSnackBar(
 
         const SnackBar(
 
           backgroundColor:
-              Colors.green,
+              Colors.red,
 
-          content: Row(
-
-            children: [
-
-              Icon(
-                Icons.check_circle,
-                color: Colors.white,
-              ),
-
-              SizedBox(width: 10),
-
-              Text("¡Bienvenido!"),
-            ],
+          content: Text(
+            "Datos incorrectos",
           ),
         ),
       );
 
-      /// ⏳ ESPERA
-      Future.delayed(
-        const Duration(seconds: 1),
-        () {
-
-          if (_role == "Tutor") {
-
-            Navigator
-                .pushReplacementNamed(
-              context,
-              '/tutor',
-            );
-
-          } else {
-
-            Navigator
-                .pushReplacementNamed(
-              context,
-              '/alumno',
-            );
-          }
-        },
-      );
-
-    } on FirebaseAuthException
-        catch (e) {
-
-      String message =
-          "Error al iniciar sesión";
-
-      if (e.code ==
-          'user-not-found') {
-
-        message =
-            "El usuario no existe";
-
-      } else if (
-          e.code ==
-              'wrong-password' ||
-          e.code ==
-              'invalid-credential') {
-
-        message =
-            "Contraseña incorrecta";
-
-      } else if (
-          e.code ==
-          'invalid-email') {
-
-        message =
-            "Correo inválido";
-      }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-
-        SnackBar(
-
-          backgroundColor:
-              Colors.red,
-
-          content: Text(message),
-        ),
-      );
+      return;
     }
+
+    /// ✅ LOGIN EXITOSO
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+
+      const SnackBar(
+
+        backgroundColor:
+            Colors.green,
+
+        content: Row(
+
+          children: [
+
+            Icon(
+              Icons.check_circle,
+              color: Colors.white,
+            ),
+
+            SizedBox(width: 10),
+
+            Text("¡Bienvenido!"),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(
+      const Duration(seconds: 1),
+      () {
+
+        if (_role == "Tutor") {
+
+          Navigator
+              .pushReplacementNamed(
+            context,
+            '/tutor',
+          );
+
+        } else {
+
+          Navigator
+              .pushReplacementNamed(
+            context,
+            '/alumno',
+          );
+        }
+      },
+    );
   }
 
   InputDecoration _inputDecoration(
@@ -189,7 +145,6 @@ class _LoginScreenState
 
       contentPadding:
           const EdgeInsets.symmetric(
-
         vertical: 18,
         horizontal: 15,
       ),
@@ -221,6 +176,7 @@ class _LoginScreenState
           gradient: LinearGradient(
 
             colors: [
+
               Color(0xFF6DD5FA),
               Color(0xFFBFF098),
             ],
@@ -301,11 +257,11 @@ class _LoginScreenState
                         height: 30,
                       ),
 
-                      /// 📧 CORREO
+                      /// 👤 USUARIO O CORREO
                       TextFormField(
 
                         controller:
-                            _emailController,
+                            _userController,
 
                         style:
                             const TextStyle(
@@ -314,7 +270,7 @@ class _LoginScreenState
 
                         decoration:
                             _inputDecoration(
-                          "Correo",
+                          "Correo o Usuario",
                         ),
 
                         validator:
@@ -326,7 +282,7 @@ class _LoginScreenState
                                   .isEmpty) {
 
                             return
-                                "Ingrese su correo";
+                                "Ingrese usuario o correo";
                           }
 
                           return null;
@@ -375,6 +331,7 @@ class _LoginScreenState
                         onChanged: (value) {
 
                           setState(() {
+
                             _role = value!;
                           });
                         },
@@ -384,7 +341,7 @@ class _LoginScreenState
                         height: 20,
                       ),
 
-                      /// 🔒 PASSWORD
+                      /// 🔒 PASSWORD O PIN
                       TextFormField(
 
                         controller:
@@ -401,7 +358,7 @@ class _LoginScreenState
                         decoration:
                             _inputDecoration(
 
-                          "Contraseña",
+                          "Contraseña o PIN",
 
                           suffix:
                               IconButton(
@@ -435,7 +392,7 @@ class _LoginScreenState
                                   .isEmpty) {
 
                             return
-                                "Ingrese su contraseña";
+                                "Ingrese contraseña o PIN";
                           }
 
                           return null;
