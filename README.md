@@ -21,4 +21,28 @@ samples, guidance on mobile development, and a full API reference.
 ### Para instalar las dependecias se hace con 
 flutter pub get
 
-## Para instalar es necesario tener el modo desarrolador en windows prendido
+## En Fedora GNOME 44
+
+Si usas Fedora 44 con GNOME, primero asegúrate de tener Flutter instalado y agregado al `PATH`.
+
+```bash
+export PATH="$HOME/development/flutter/bin:$PATH"
+flutter --version
+cd ~/TESIS
+flutter pub get
+```
+
+Si todavía no tienes Flutter instalado, puedes hacerlo así:
+
+```bash
+sudo dnf install git curl unzip xz
+mkdir -p ~/development
+cd ~/development
+git clone https://github.com/flutter/flutter.git -b stable
+echo 'export PATH="$HOME/development/flutter/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+## En Windows
+
+Para compilar o ejecutar en Windows sí necesitas tener activado el modo desarrollador.
