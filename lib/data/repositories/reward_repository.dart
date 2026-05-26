@@ -20,6 +20,19 @@ class RewardRepository {
         );
   }
 
+  /// ✏️ ACTUALIZAR RECOMPENSA
+  Future<void> updateReward(
+    RewardModel reward,
+  ) async {
+
+    await _firestore
+        .collection("rewards")
+        .doc(reward.id)
+        .update(
+          reward.toMap(),
+        );
+  }
+
   /// 📚 OBTENER RECOMPENSAS
   Future<List<RewardModel>>
       getRewards() async {
@@ -34,5 +47,23 @@ class RewardRepository {
         doc.data(),
       );
     }).toList();
+  }
+
+  /// 👨‍🏫 OBTENER RECOMPENSAS DEL TUTOR
+  Future<List<RewardModel>>
+      getRewardsByTutor(
+    String tutorEmail,
+  ) async {
+
+    final snapshot = await _firestore
+        .collection("rewards")
+        .get();
+
+    return snapshot.docs
+        .map((doc) => RewardModel.fromMap(doc.data()))
+        .where((reward) =>
+            reward.tutorEmail.isEmpty ||
+            reward.tutorEmail == tutorEmail)
+        .toList();
   }
 }

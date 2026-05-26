@@ -10,6 +10,8 @@ class RewardModel {
 
   final int requiredStars;
 
+  final String tutorEmail;
+
   RewardModel({
 
     required this.id,
@@ -21,6 +23,8 @@ class RewardModel {
     required this.imagePath,
 
     required this.requiredStars,
+
+    required this.tutorEmail,
   });
 
   Map<String, dynamic> toMap() {
@@ -36,6 +40,8 @@ class RewardModel {
       "imagePath": imagePath,
 
       "requiredStars": requiredStars,
+
+      "tutorEmail": tutorEmail,
     };
   }
 
@@ -54,6 +60,8 @@ class RewardModel {
       imagePath: map["imagePath"],
 
       requiredStars: map["requiredStars"],
+
+      tutorEmail: map["tutorEmail"] ?? "",
     );
   }
 }

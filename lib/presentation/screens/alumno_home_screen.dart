@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/progress_repository.dart';
@@ -60,9 +61,15 @@ class AlumnoHomeScreen extends StatelessWidget {
               final progressRepo =
                   ProgressRepository();
 
-              /// ⚠️ CAMBIAR LUEGO
-              String userId =
-                  "alumno@gmail.com";
+              final User? currentUser =
+                FirebaseAuth.instance.currentUser;
+
+              final String userId =
+                currentUser?.email ?? "";
+
+              if (userId.isEmpty) {
+              return;
+              }
 
               final stars =
                   await progressRepo

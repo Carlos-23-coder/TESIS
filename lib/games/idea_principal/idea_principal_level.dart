@@ -1,4 +1,5 @@
 import '../../core/game_engine/game_progress.dart';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -45,6 +46,32 @@ class _IdeaPrincipalLevelState
   /// ⭐ INTENTOS
   int attempts = 0;
 
+  late final List<String> shuffledOptions;
+
+  late final int shuffledCorrectAnswer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final level = ideaLevels[widget.levelIndex];
+
+    final options = List<String>.from(
+      level.options,
+    );
+
+    final correctOption =
+        options[level.correctAnswer];
+
+    options.shuffle(Random());
+
+    shuffledOptions = options;
+    shuffledCorrectAnswer =
+        shuffledOptions.indexOf(
+      correctOption,
+    );
+  }
+
   Future<void> playSuccess() async {
 
     await _audioPlayer.play(
@@ -76,7 +103,7 @@ class _IdeaPrincipalLevelState
     attempts++;
 
     final bool isCorrect =
-        index == level.correctAnswer;
+      index == shuffledCorrectAnswer;
 
     /// ⭐ SISTEMA DE ESTRELLAS
     int earnedStars = 1;
@@ -351,7 +378,7 @@ class _IdeaPrincipalLevelState
                       backgroundColor:
                           getButtonColor(
                         i,
-                        level.correctAnswer,
+                          shuffledCorrectAnswer,
                       ),
 
                       shape:
@@ -369,7 +396,7 @@ class _IdeaPrincipalLevelState
 
                     child: Text(
 
-                      level.options[i],
+                      shuffledOptions[i],
 
                       textAlign:
                           TextAlign.center,
