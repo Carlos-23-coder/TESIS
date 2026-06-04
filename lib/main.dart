@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'data/database/database_helper.dart';
+import 'data/services/sync_service.dart';
 
 import 'presentation/screens/welcome_screen.dart';
 import 'presentation/screens/login_screen.dart';
@@ -15,11 +16,25 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// 🔥 FIREBASE
-  await Firebase.initializeApp();
+  /// 🔥 FIREBASE (CON MANEJO DE ERRORES)
+  try {
+
+    await Firebase.initializeApp();
+    print("✅ Firebase inicializado");
+
+  } catch (e) {
+
+    print(
+      "⚠️ Firebase offline: $e",
+    );
+    /// LA APP FUNCIONARÁ EN MODO OFFLINE
+  }
 
   /// 💾 SQLITE
   await DatabaseHelper.instance.database;
+
+  /// 🔄 INICIALIZAR SERVICIO DE SINCRONIZACIÓN
+  SyncService.instance;
 
   runApp(
     const LectoPlayApp(),

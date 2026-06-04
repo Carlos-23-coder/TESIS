@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sqflite/sqflite.dart';
+import '../database/database_helper.dart';
 
 class FirebaseService {
 
@@ -8,6 +10,9 @@ class FirebaseService {
 
   final FirebaseAuth _auth =
       FirebaseAuth.instance;
+  
+  final DatabaseHelper _dbHelper =
+      DatabaseHelper.instance;
 
   /// 🔥 CREAR USUARIO
   Future<void> createUser({
@@ -46,13 +51,126 @@ class FirebaseService {
     });
   }
 
-  /// 🔐 LOGIN FLEXIBLE
+  /// 🔐 LOGIN FLEXIBLE (OFFLINE FIRST)
+  /// Intenta primero SQLite, luego Firebase
   /// Puede iniciar con:
   /// - correo + contraseña
   /// - usuario + contraseña
   /// - correo + pin
   /// - usuario + pin
   Future<Map<String, dynamic>?> login({
+
+    required String identifier,
+    required String passwordOrPin,
+    required String role,
+
+  }) async {
+
+    try {
+
+      /// 📱 INTENTA LOGIN OFFLINE (SQLITE)
+      final offlineResult =
+          await _loginOffline(
+        identifier: identifier,
+        passwordOrPin: passwordOrPin,
+        role: role,
+      );
+
+      if (offlineResult != null) {
+        print(
+          "✅ Login OFFLINE exitoso",
+        );
+        return offlineResult;
+      }
+
+      /// 🌐 SI FALLA OFFLINE, INTENTA FIREBASE
+      print(
+        "📶 Intentando login con Firebase...",
+      );
+
+      return await _loginFirebase(
+        identifier: identifier,
+        passwordOrPin: passwordOrPin,
+        role: role,
+      );
+
+    } catch (e) {
+
+      print(
+        "ERROR LOGIN: $e",
+      );
+
+      return null;
+    }
+  }
+
+  /// 📱 LOGIN OFFLINE CON SQLITE
+  Future<Map<String, dynamic>?> _loginOffline({
+
+    required String identifier,
+    required String passwordOrPin,
+    required String role,
+
+  }) async {
+
+    try {
+
+      final db = await _dbHelper.database;
+
+      /// 🔍 BUSCAR POR EMAIL O USERNAME
+      final List<Map<String, dynamic>>
+          results = await db.query(
+
+        'users',
+
+        where: '(email = ? OR username = ?) AND role = ?',
+
+        whereArgs: [
+          identifier,
+          identifier,
+          role,
+        ],
+      );
+
+      /// ❌ NO EXISTE OFFLINE
+      if (results.isEmpty) {
+        return null;
+      }
+
+      final userData = results.first;
+
+      final String savedPassword =
+          userData["password"] ?? "";
+
+      final String savedPin =
+          userData["pin"] ?? "";
+
+      /// 🔐 VALIDAR PASSWORD O PIN
+      final bool validAccess =
+
+          passwordOrPin == savedPassword ||
+
+          passwordOrPin == savedPin;
+
+      if (!validAccess) {
+        return null;
+      }
+
+      /// ✅ RETORNAR DATOS DEL USUARIO
+      return userData;
+
+    } catch (e) {
+
+      print(
+        "ERROR LOGIN OFFLINE: $e",
+      );
+
+      return null;
+    }
+  }
+
+  /// 🌐 LOGIN CON FIREBASE (ONLINE)
+  Future<Map<String, dynamic>?> _loginFirebase({
 
     required String identifier,
     required String passwordOrPin,
@@ -94,9 +212,8 @@ class FirebaseService {
             .get();
       }
 
-      /// ❌ NO EXISTE
+      /// ❌ NO EXISTE EN FIREBASE
       if (snapshot.docs.isEmpty) {
-
         return null;
       }
 
@@ -118,7 +235,6 @@ class FirebaseService {
           passwordOrPin == savedPin;
 
       if (!validAccess) {
-
         return null;
       }
 
@@ -157,7 +273,7 @@ class FirebaseService {
     return _auth.currentUser;
   }
 
-  /// 🔥 GUARDAR PROGRESO
+  /// 🔥 GUARDAR PROGRESO (OFFLINE FIRST)
   Future<void> saveProgress({
 
     required String email,
@@ -167,38 +283,206 @@ class FirebaseService {
 
   }) async {
 
-    final userRef =
-        _db.collection('users')
-            .doc(email);
+    try {
 
-    await userRef
-        .collection('progress')
-        .doc("${game}_$level")
-        .set({
+      /// 📱 GUARDAR EN SQLITE (OFFLINE)
+      await _saveProgressOffline(
+        email: email,
+        game: game,
+        score: score,
+        level: level,
+      );
 
-      'game': game,
-      'score': score,
-      'level': level,
+      /// 🌐 INTENTA GUARDAR EN FIREBASE
+      /// (SI HAY CONEXIÓN)
+      try {
 
-      'date':
-          FieldValue.serverTimestamp(),
-    });
+        final userRef =
+            _db.collection('users')
+                .doc(email);
+
+        await userRef
+            .collection('progress')
+            .doc("${game}_$level")
+            .set({
+
+          'game': game,
+          'score': score,
+          'level': level,
+
+          'date':
+              FieldValue.serverTimestamp(),
+        });
+
+      } catch (e) {
+
+        print(
+          "⚠️ No se sincronizó con Firebase: $e",
+        );
+      }
+
+    } catch (e) {
+
+      print(
+        "ERROR GUARDAR PROGRESO: $e",
+      );
+    }
   }
 
-  /// 📚 OBTENER PROGRESO
+  /// 📱 GUARDAR PROGRESO OFFLINE
+  Future<void> _saveProgressOffline({
+
+    required String email,
+    required String game,
+    required int score,
+    required int level,
+
+  }) async {
+
+    final db = await _dbHelper.database;
+
+    /// CREAR TABLA SI NO EXISTE
+    await db.execute('''
+
+      CREATE TABLE IF NOT EXISTS progress (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        game TEXT NOT NULL,
+        stars INTEGER NOT NULL,
+        level INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        UNIQUE(email, game, level)
+      )
+
+    ''');
+
+    /// GUARDAR O ACTUALIZAR
+    await db.insert(
+
+      'progress',
+
+      {
+
+        'email': email,
+        'game': game,
+        'stars': score,
+        'level': level,
+        'date': DateTime.now().toIso8601String(),
+      },
+
+      conflictAlgorithm:
+          ConflictAlgorithm.replace,
+    );
+  }
+
+  /// 📚 OBTENER PROGRESO (OFFLINE FIRST)
   Future<List<Map<String, dynamic>>>
       getUserProgress(
     String email,
   ) async {
 
-    final snapshot = await _db
-        .collection('users')
-        .doc(email)
-        .collection('progress')
-        .get();
+    try {
 
-    return snapshot.docs
-        .map((doc) => doc.data())
-        .toList();
+      /// 📱 INTENTA OBTENER OFFLINE
+      final offlineProgress =
+          await _getUserProgressOffline(
+        email,
+      );
+
+      if (offlineProgress.isNotEmpty) {
+        return offlineProgress;
+      }
+
+      /// 🌐 SI NO HAY OFFLINE,
+      /// INTENTA FIREBASE
+      return await _getUserProgressFirebase(
+        email,
+      );
+
+    } catch (e) {
+
+      print(
+        "ERROR OBTENER PROGRESO: $e",
+      );
+
+      return [];
+    }
+  }
+
+  /// 📱 OBTENER PROGRESO OFFLINE
+  Future<List<Map<String, dynamic>>>
+      _getUserProgressOffline(
+    String email,
+  ) async {
+
+    try {
+
+      final db =
+          await _dbHelper.database;
+
+      /// CREAR TABLA SI NO EXISTE
+      await db.execute('''
+
+        CREATE TABLE IF NOT EXISTS progress (
+
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL,
+          game TEXT NOT NULL,
+          stars INTEGER NOT NULL,
+          level INTEGER NOT NULL,
+          date TEXT NOT NULL,
+          UNIQUE(email, game, level)
+        )
+
+      ''');
+
+      final results = await db.query(
+
+        'progress',
+
+        where: 'email = ?',
+
+        whereArgs: [email],
+      );
+
+      return results;
+
+    } catch (e) {
+
+      print(
+        "ERROR OBTENER PROGRESO OFFLINE: $e",
+      );
+
+      return [];
+    }
+  }
+
+  /// 🌐 OBTENER PROGRESO DE FIREBASE
+  Future<List<Map<String, dynamic>>>
+      _getUserProgressFirebase(
+    String email,
+  ) async {
+
+    try {
+
+      final snapshot = await _db
+          .collection('users')
+          .doc(email)
+          .collection('progress')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => doc.data())
+          .toList();
+
+    } catch (e) {
+
+      print(
+        "ERROR OBTENER PROGRESO FIREBASE: $e",
+      );
+
+      return [];
+    }
   }
 }

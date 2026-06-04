@@ -21,41 +21,50 @@ class LevelResultDialog extends StatelessWidget {
     return Dialog(
 
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
       ),
 
-      child: Padding(
-        padding: const EdgeInsets.all(25),
+      child: Container(
+
+        padding: const EdgeInsets.all(30),
+
+        decoration: BoxDecoration(
+
+          color: Colors.white,
+
+          borderRadius: BorderRadius.circular(20),
+        ),
 
         child: Column(
+
           mainAxisSize: MainAxisSize.min,
 
           children: [
 
-            /// CARITA
-            Icon(
-              success
-                  ? Icons.sentiment_very_satisfied
-                  : Icons.sentiment_dissatisfied,
+            /// ✅ EMOJI RESULTADO
+            Text(
 
-              color: success
-                  ? Colors.green
-                  : Colors.red,
+              success ? "✅" : "❌",
 
-              size: 100,
+              style: const TextStyle(
+                fontSize: 60,
+              ),
             ),
 
             const SizedBox(height: 20),
 
-            /// TÍTULO
+            /// 📊 TÍTULO
             Text(
+
               success
                   ? "¡Excelente!"
-                  : "¡Ups!",
+                  : "¡Vuelve a intentar!",
 
               style: TextStyle(
-                fontSize: 30,
+
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
+
                 color: success
                     ? Colors.green
                     : Colors.red,
@@ -64,22 +73,23 @@ class LevelResultDialog extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            /// MENSAJE
+            /// 📝 MENSAJE
             Text(
+
               success
                   ? "Comprendiste correctamente la lectura."
-                  : "Vuelve a leer el texto e inténtalo otra vez.",
+                  : "Lee el texto más cuidadosamente e inténtalo otra vez.",
 
               textAlign: TextAlign.center,
 
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
               ),
             ),
 
             const SizedBox(height: 20),
 
-            /// ESTRELLAS
+            /// ⭐ ESTRELLAS
             if (success)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -102,59 +112,58 @@ class LevelResultDialog extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            /// BOTONES
+            /// 🔘 BOTONES
             Row(
+
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceEvenly,
+
               children: [
 
-                /// MAPA
-                Expanded(
-                  child: ElevatedButton(
+                /// VOLVER/REINTENTAR
+                ElevatedButton.icon(
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
+                  onPressed: success
+                      ? onMap
+                      : onRetry,
 
-                    onPressed: onMap,
+                  icon: Icon(
+                    success
+                        ? Icons.arrow_back
+                        : Icons.refresh,
+                  ),
 
-                    child: const Text(
-                      "Mapa",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                  label: Text(
+                    success
+                        ? "Volver"
+                        : "Reintentar",
+                  ),
+
+                  style: ElevatedButton.styleFrom(
+
+                    backgroundColor: Colors.blue,
                   ),
                 ),
 
-                const SizedBox(width: 15),
+                /// SIGUIENTE
+                if (success)
+                  ElevatedButton.icon(
 
-                /// SIGUIENTE / REINTENTAR
-                Expanded(
-                  child: ElevatedButton(
+                    onPressed: onNextLevel,
+
+                    icon: const Icon(
+                      Icons.arrow_forward,
+                    ),
+
+                    label: const Text(
+                      "Siguiente",
+                    ),
 
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: success
-                          ? Colors.green
-                          : Colors.orange,
 
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-
-                    onPressed: success
-                        ? onNextLevel
-                        : onRetry,
-
-                    child: Text(
-                      success
-                          ? "Siguiente"
-                          : "Reintentar",
-
-                      style: const TextStyle(
-                        color: Colors.white,
-                      ),
+                      backgroundColor: Colors.green,
                     ),
                   ),
-                ),
               ],
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/progress_repository.dart';
 
 import '../../games/idea_principal/idea_principal_map.dart';
+import '../../games/preguntas_rapidas/preguntas_rapidas_map.dart';
 
 import '../profile/student_profile_screen.dart';
 
@@ -131,22 +132,6 @@ class AlumnoHomeScreen extends StatelessWidget {
             ),
           ),
 
-          /// ⚙️ AJUSTES
-          IconButton(
-
-            icon: const Icon(
-              Icons.settings,
-            ),
-
-            onPressed: () {
-
-              Navigator.pushNamed(
-                context,
-                '/settings',
-              );
-            },
-          ),
-
           /// 🚪 LOGOUT
           IconButton(
 
@@ -256,7 +241,7 @@ class AlumnoHomeScreen extends StatelessWidget {
                     "Idea\nPrincipal",
                   ),
 
-                  /// PREGUNTAS
+                  /// PREGUNTAS RÁPIDAS
                   _gameCard(
 
                     context,
@@ -264,16 +249,6 @@ class AlumnoHomeScreen extends StatelessWidget {
                     Icons.timer,
 
                     "Preguntas\nRápidas",
-                  ),
-
-                  /// PALABRAS
-                  _gameCard(
-
-                    context,
-
-                    Icons.auto_awesome,
-
-                    "Palabras\nClave",
                   ),
                 ],
               ),
@@ -310,6 +285,20 @@ class AlumnoHomeScreen extends StatelessWidget {
 
               builder: (_) =>
                   const IdeaPrincipalMap(),
+            ),
+          );
+
+        } else if (title ==
+            "Preguntas\nRápidas") {
+
+          Navigator.push(
+
+            context,
+
+            MaterialPageRoute(
+
+              builder: (_) =>
+                  const PreguntasRapidasMap(),
             ),
           );
 

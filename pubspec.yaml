@@ -25,11 +25,15 @@ dependencies:
   cloud_firestore: ^6.3.0
   firebase_storage: ^13.0.0
 
+  # CONECTIVIDAD
+  connectivity_plus: ^5.0.2
+
   # IMÁGENES
   image_picker: ^1.1.2
 
   # AUDIO
   audioplayers: ^6.0.0
+  flutter_tts: ^4.2.5
 
   # 📊 GRÁFICOS
   fl_chart: ^0.68.0

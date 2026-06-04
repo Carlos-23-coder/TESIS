@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/progress_repository.dart';
 
@@ -33,23 +36,27 @@ class _StudentProfileScreenState
 
   String studentName = "Alumno";
   String email = "Sin correo";
+
   String? photoUrl;
+
+  File? localImage;
 
   int totalStars = 0;
 
-  /// 🔥 USUARIO ACTUAL
   final user =
       FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
+
     super.initState();
 
     loadProfile();
     loadStars();
+    loadLocalImage();
   }
 
-  /// ⭐ CARGAR ESTRELLAS REALES
+  /// ⭐ CARGAR ESTRELLAS
   Future<void> loadStars() async {
 
     if (user == null) return;
@@ -74,7 +81,7 @@ class _StudentProfileScreenState
     });
   }
 
-  /// 👤 CARGAR PERFIL REAL
+  /// 👤 CARGAR PERFIL
   Future<void> loadProfile() async {
 
     if (user == null) return;
@@ -103,6 +110,28 @@ class _StudentProfileScreenState
     }
   }
 
+  /// 📂 CARGAR IMAGEN LOCAL
+  Future<void> loadLocalImage() async {
+
+    if (user == null) return;
+
+    final directory =
+        await getApplicationDocumentsDirectory();
+
+    final imagePath =
+        '${directory.path}/${user!.email}.jpg';
+
+    final file =
+        File(imagePath);
+
+    if (await file.exists()) {
+
+      setState(() {
+        localImage = file;
+      });
+    }
+  }
+
   /// 📷 CAMBIAR FOTO
   Future<void> changePhoto() async {
 
@@ -114,7 +143,7 @@ class _StudentProfileScreenState
     final XFile? image =
         await showModalBottomSheet<XFile>(
 
-      context: context,
+      context: this.context,
 
       builder: (_) {
 
@@ -126,6 +155,7 @@ class _StudentProfileScreenState
 
               /// 📸 CÁMARA
               ListTile(
+
                 leading:
                     const Icon(
                   Icons.camera_alt,
@@ -145,7 +175,7 @@ class _StudentProfileScreenState
                   );
 
                   Navigator.pop(
-                    context,
+                    this.context,
                     photo,
                   );
                 },
@@ -153,6 +183,7 @@ class _StudentProfileScreenState
 
               /// 🖼️ GALERÍA
               ListTile(
+
                 leading:
                     const Icon(
                   Icons.photo,
@@ -172,7 +203,7 @@ class _StudentProfileScreenState
                   );
 
                   Navigator.pop(
-                    context,
+                    this.context,
                     photo,
                   );
                 },
@@ -185,18 +216,28 @@ class _StudentProfileScreenState
 
     if (image == null) return;
 
-    final file =
-        File(image.path);
+    /// ✅ GUARDAR LOCALMENTE
+    final directory =
+        await getApplicationDocumentsDirectory();
 
-    /// 🔥 SUBIR IMAGEN
+    final savedImage =
+        await File(image.path).copy(
+      '${directory.path}/${user!.email}.jpg',
+    );
+
+    setState(() {
+      localImage = savedImage;
+    });
+
+    /// ☁️ SUBIR A FIREBASE
     final url =
         await _profileRepository
             .uploadProfileImage(
       user!.email!,
-      file,
+      savedImage,
     );
 
-    /// 💾 GUARDAR URL EN FIRESTORE
+    /// 💾 GUARDAR URL
     await _profileRepository
         .savePhotoUrl(
       user!.email!,
@@ -209,7 +250,7 @@ class _StudentProfileScreenState
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
+    ScaffoldMessenger.of(this.context)
         .showSnackBar(
 
       const SnackBar(
@@ -229,6 +270,7 @@ class _StudentProfileScreenState
           const Color(0xFFEAF6FF),
 
       appBar: AppBar(
+
         title: const Text(
           "Mi Perfil",
         ),
@@ -243,7 +285,9 @@ class _StudentProfileScreenState
 
           children: [
 
-            const SizedBox(height: 20),
+            const SizedBox(
+              height: 20,
+            ),
 
             /// 📷 FOTO PERFIL
             GestureDetector(
@@ -258,41 +302,59 @@ class _StudentProfileScreenState
                     Colors.white,
 
                 backgroundImage:
-                    photoUrl != null
-                        ? NetworkImage(
-                            photoUrl!,
-                          )
-                        : null,
+
+                    localImage != null
+
+                        ? FileImage(localImage!)
+
+                        : photoUrl != null
+
+                            ? NetworkImage(
+                                photoUrl!,
+                              )
+
+                            : null,
 
                 child:
-                    photoUrl == null
+
+                    localImage == null &&
+                            photoUrl == null
+
                         ? const Icon(
                             Icons.person,
                             size: 70,
                             color:
                                 Colors.blue,
                           )
+
                         : null,
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             const Text(
+
               "Toca la foto para cambiarla",
+
               style: TextStyle(
                 color: Colors.grey,
                 fontSize: 14,
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(
+              height: 30,
+            ),
 
             /// 👤 NOMBRE
             Card(
 
               shape:
                   RoundedRectangleBorder(
+
                 borderRadius:
                     BorderRadius.circular(
                   18,
@@ -315,13 +377,16 @@ class _StudentProfileScreenState
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(
+              height: 10,
+            ),
 
             /// 📧 CORREO
             Card(
 
               shape:
                   RoundedRectangleBorder(
+
                 borderRadius:
                     BorderRadius.circular(
                   18,
@@ -344,13 +409,16 @@ class _StudentProfileScreenState
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(
+              height: 10,
+            ),
 
             /// ⭐ ESTRELLAS
             Card(
 
               shape:
                   RoundedRectangleBorder(
+
                 borderRadius:
                     BorderRadius.circular(
                   18,

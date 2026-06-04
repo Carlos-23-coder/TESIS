@@ -37,7 +37,7 @@ class DatabaseHelper {
 
       path,
 
-      version: 3,
+      version: 4,
 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
@@ -72,6 +72,55 @@ class DatabaseHelper {
       'pin': '1234',
       'role': 'Tutor',
     });
+
+    /// 📊 TABLA DE PROGRESO OFFLINE
+    await db.execute('''
+
+      CREATE TABLE progress (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        game TEXT NOT NULL,
+        stars INTEGER NOT NULL,
+        level INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        synced INTEGER DEFAULT 0,
+        UNIQUE(email, game, level)
+      )
+
+    ''');
+
+    /// 🎁 TABLA DE RECOMPENSAS OFFLINE
+    await db.execute('''
+
+      CREATE TABLE rewards (
+
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT,
+        imagePath TEXT,
+        requiredStars INTEGER,
+        tutorEmail TEXT,
+        date TEXT,
+        synced INTEGER DEFAULT 0
+      )
+
+    ''');
+
+    /// ❓ TABLA DE PREGUNTAS RÁPIDAS OFFLINE
+    await db.execute('''
+
+      CREATE TABLE rapid_questions (
+
+        level INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        story TEXT,
+        imageUrl TEXT,
+        date TEXT,
+        synced INTEGER DEFAULT 0
+      )
+
+    ''');
   }
 
   Future _onUpgrade(
@@ -92,6 +141,103 @@ class DatabaseHelper {
 
       await db.execute(
       "ALTER TABLE users ADD COLUMN pin TEXT DEFAULT '0000'",
+      );
+    }
+
+    /// CREAR TABLA DE PROGRESO SI NO EXISTE
+    try {
+
+      await db.execute('''
+
+        CREATE TABLE IF NOT EXISTS progress (
+
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL,
+          game TEXT NOT NULL,
+          stars INTEGER NOT NULL,
+          level INTEGER NOT NULL,
+          date TEXT NOT NULL,
+          synced INTEGER DEFAULT 0,
+          UNIQUE(email, game, level)
+        )
+
+      ''');
+
+    } catch (e) {
+      print(
+        "Tabla progress ya existe: $e",
+      );
+    }
+
+    /// CREAR TABLA DE RECOMPENSAS SI NO EXISTE
+    try {
+
+      await db.execute('''
+
+        CREATE TABLE IF NOT EXISTS rewards (
+
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          category TEXT,
+          imagePath TEXT,
+          requiredStars INTEGER,
+          tutorEmail TEXT,
+          date TEXT,
+          synced INTEGER DEFAULT 0
+        )
+
+      ''');
+
+    } catch (e) {
+      print(
+        "Tabla rewards ya existe: $e",
+      );
+    }
+
+    /// CREAR TABLA DE PREGUNTAS RÁPIDAS SI NO EXISTE
+    try {
+
+      await db.execute('''
+
+        CREATE TABLE IF NOT EXISTS rapid_questions (
+
+          level INTEGER PRIMARY KEY,
+          title TEXT NOT NULL,
+          story TEXT,
+          imageUrl TEXT,
+          date TEXT,
+          synced INTEGER DEFAULT 0
+        )
+
+      ''');
+
+    } catch (e) {
+      print(
+        "Tabla rapid_questions ya existe: $e",
+      );
+    }
+
+    /// AGREGAR COLUMNA synced SI NO EXISTE
+    try {
+
+      final progressInfo =
+          await db.rawQuery(
+        "PRAGMA table_info(progress)",
+      );
+
+      final progressCols =
+          progressInfo.map((e) => e['name']).toList();
+
+      if (!progressCols.contains('synced')) {
+
+        await db.execute(
+          "ALTER TABLE progress ADD COLUMN synced INTEGER DEFAULT 0",
+        );
+      }
+
+    } catch (e) {
+      print(
+        "Error en migración progress: $e",
       );
     }
   }

@@ -4,21 +4,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/game_engine/game_progress.dart';
 import '../../data/repositories/progress_repository.dart';
 
-import 'idea_principal_level.dart';
+import '../../../data/models/rapid_question_model.dart';
+import '../../../data/repositories/rapid_questions_repository.dart';
+import 'preguntas_rapidas_level.dart';
 
-class IdeaPrincipalMap extends StatefulWidget {
+class PreguntasRapidasMap
+    extends StatefulWidget {
 
-  const IdeaPrincipalMap({super.key});
+  const PreguntasRapidasMap({
+    super.key,
+  });
 
   @override
-  State<IdeaPrincipalMap> createState() =>
-      _IdeaPrincipalMapState();
+  State<PreguntasRapidasMap>
+      createState() =>
+          _PreguntasRapidasMapState();
 }
 
-class _IdeaPrincipalMapState
-    extends State<IdeaPrincipalMap> {
+class _PreguntasRapidasMapState
+    extends State<PreguntasRapidasMap> {
 
-  /// 🔥 REPOSITORIO
+  /// 📚 REPOSITORIO DE PREGUNTAS
+  final RapidQuestionsRepository
+      _questionsRepository =
+          RapidQuestionsRepository();
+
+  /// 🔥 REPOSITORIO DE PROGRESO
   final ProgressRepository
       _progressRepository =
           ProgressRepository();
@@ -27,49 +38,66 @@ class _IdeaPrincipalMapState
   final user =
       FirebaseAuth.instance.currentUser;
 
+  /// 📚 NIVELES
+  List<RapidQuestionModel>
+      levels = [];
+
   /// ⭐ ESTRELLAS
   Map<int, int> starsMap = {};
+
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
 
-    loadProgress();
+    loadLevelsAndProgress();
   }
 
-  /// 📚 CARGAR PROGRESO
-  Future<void> loadProgress() async {
+  /// 📚 CARGAR NIVELES Y PROGRESO
+  Future<void>
+      loadLevelsAndProgress() async {
 
-    if (user == null) return;
+    /// CARGAR NIVELES
+    levels = await _questionsRepository
+        .getAllLevels();
 
-    final progress =
-        await _progressRepository
-            .getStudentProgress(
-      user!.email!,
-    );
+    /// CARGAR PROGRESO
+    if (user != null) {
 
-    Map<int, int> loadedStars = {};
-
-    for (var item in progress) {
-
-      final int level =
-          item["level"] ?? 1;
-
-      final int stars =
-          item["stars"] ?? 0;
-
-      /// ⭐ GUARDAR EN MAPA
-      loadedStars[level - 1] = stars;
-
-      /// 💾 GUARDAR LOCAL
-      GameProgress.saveStars(
-        level - 1,
-        stars,
+      final progress =
+          await _progressRepository
+              .getStudentProgress(
+        user!.email!,
       );
+
+      Map<int, int> loadedStars = {};
+
+      for (var item in progress) {
+
+        final int level =
+            item["level"] ?? 1;
+
+        final int stars =
+            item["stars"] ?? 0;
+
+        /// ⭐ GUARDAR EN MAPA
+        loadedStars[level - 1] = stars;
+
+        /// 💾 GUARDAR LOCAL
+        GameProgress.saveStars(
+          level - 1,
+          stars,
+        );
+      }
+
+      setState(() {
+        starsMap = loadedStars;
+      });
     }
 
     setState(() {
-      starsMap = loadedStars;
+      loading = false;
     });
   }
 
@@ -83,29 +111,35 @@ class _IdeaPrincipalMapState
 
       appBar: AppBar(
         title: const Text(
-          "Idea Principal",
+          "Preguntas Rápidas",
         ),
         centerTitle: true,
       ),
 
-      body: SingleChildScrollView(
+      body: loading
+          ? const Center(
+              child:
+                  CircularProgressIndicator(),
+            )
+          : SingleChildScrollView(
 
-        child: Column(
+              child: Column(
 
-          children: [
+                children: [
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            for (int i = 0; i < 10; i++)
-              _levelItem(context, i),
+                  for (int i = 0; i < levels.length; i++)
+                    _levelItem(context, i),
 
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
     );
   }
 
+  /// 🎮 ITEM DE NIVEL
   Widget _levelItem(
     BuildContext context,
     int index,
@@ -167,14 +201,14 @@ class _IdeaPrincipalMapState
 
                       MaterialPageRoute(
                         builder: (_) =>
-                            IdeaPrincipalLevel(
-                          levelIndex: index,
+                            PreguntasRapidasLevel(
+                          level: levels[index],
                         ),
                       ),
                     );
 
                     /// 🔥 RECARGAR PROGRESO
-                    await loadProgress();
+                    await loadLevelsAndProgress();
                   }
                 : null,
 
@@ -227,7 +261,7 @@ class _IdeaPrincipalMapState
 
                   Icon(
                     unlocked
-                        ? Icons.star
+                        ? Icons.quiz
                         : Icons.lock,
 
                     color: Colors.white,
@@ -275,6 +309,31 @@ class _IdeaPrincipalMapState
               ),
             ),
           ),
+
+          /// 📖 TÍTULO DEL NIVEL
+          if (index < levels.length)
+            Padding(
+
+              padding:
+                  const EdgeInsets.only(
+                top: 10,
+              ),
+
+              child: Text(
+
+                levels[index].title,
+
+                style: const TextStyle(
+
+                  fontSize: 14,
+                  fontWeight:
+                      FontWeight.w500,
+                ),
+
+                textAlign:
+                    TextAlign.center,
+              ),
+            ),
         ],
       ),
     );

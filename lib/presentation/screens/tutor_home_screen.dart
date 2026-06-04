@@ -1,15 +1,91 @@
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
+
+import '../../data/repositories/tutor_repository.dart';
+
+import '../tutor/rapid_questions_admin_screen.dart';
+import '../tutor/tutor_profile_screen.dart';
 
 import 'tutor_rewards_screen.dart';
 import '../tutor/tutor_dashboard_screen.dart';
 
-class TutorHomeScreen extends StatelessWidget {
+class TutorHomeScreen extends StatefulWidget {
 
   const TutorHomeScreen({
     super.key,
   });
 
-  void _logout(BuildContext context) {
+  @override
+  State<TutorHomeScreen> createState() =>
+      _TutorHomeScreenState();
+}
+
+class _TutorHomeScreenState
+    extends State<TutorHomeScreen> {
+
+  final TutorRepository
+      _repository =
+          TutorRepository();
+
+  File? tutorImage;
+
+  String tutorName =
+      "Tutor";
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadTutorData();
+  }
+
+  /// 👤 CARGAR DATOS DEL TUTOR
+Future<void> loadTutorData() async {
+
+  final user =
+      FirebaseAuth
+          .instance
+          .currentUser;
+
+  if (user == null) return;
+
+  final data =
+      await _repository
+          .getProfile(
+    user.email!,
+  );
+
+  if (data == null) return;
+
+  tutorName =
+      data["username"] ??
+      "Tutor";
+
+  final photoPath =
+      data["photoUrl"] ?? "";
+
+  if (photoPath.isNotEmpty) {
+
+    final file =
+        File(photoPath);
+
+    if (await file.exists()) {
+
+      tutorImage = file;
+    }
+  }
+
+  if (mounted) {
+    setState(() {});
+  }
+}
+
+
+  void _logout(
+    BuildContext context,
+  ) {
 
     Navigator.pushNamedAndRemoveUntil(
 
@@ -22,20 +98,26 @@ class TutorHomeScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
 
     return Scaffold(
 
       backgroundColor:
-          const Color(0xFFEAF6FF),
+          const Color(
+        0xFFEAF6FF,
+      ),
 
       appBar: AppBar(
 
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading:
+            false,
 
         elevation: 0,
 
-        backgroundColor: Colors.blueAccent,
+        backgroundColor:
+            Colors.blueAccent,
 
         title: const Text(
           "Tutor",
@@ -46,31 +128,19 @@ class TutorHomeScreen extends StatelessWidget {
           IconButton(
 
             icon: const Icon(
-              Icons.settings,
-            ),
-
-            onPressed: () {
-
-              Navigator.pushNamed(
-                context,
-                '/settings',
-              );
-            },
-          ),
-
-          IconButton(
-
-            icon: const Icon(
               Icons.logout,
             ),
 
             onPressed: () =>
-                _logout(context),
+                _logout(
+              context,
+            ),
           ),
         ],
       ),
 
-      body: SingleChildScrollView(
+      body:
+          SingleChildScrollView(
 
         child: Column(
 
@@ -79,24 +149,32 @@ class TutorHomeScreen extends StatelessWidget {
             /// 🔵 HEADER
             Container(
 
-              width: double.infinity,
+              width:
+                  double.infinity,
 
               padding:
-                  const EdgeInsets.all(25),
+                  const EdgeInsets.all(
+                25,
+              ),
 
               decoration:
                   const BoxDecoration(
 
-                color: Colors.blueAccent,
+                color:
+                    Colors.blueAccent,
 
                 borderRadius:
                     BorderRadius.only(
 
                   bottomLeft:
-                      Radius.circular(35),
+                      Radius.circular(
+                    35,
+                  ),
 
                   bottomRight:
-                      Radius.circular(35),
+                      Radius.circular(
+                    35,
+                  ),
                 ),
               ),
 
@@ -112,33 +190,51 @@ class TutorHomeScreen extends StatelessWidget {
                     backgroundColor:
                         Colors.white,
 
-                    child: Icon(
+                    backgroundImage:
+                        tutorImage !=
+                                null
+                            ? FileImage(
+                                tutorImage!,
+                              )
+                            : null,
 
-                      Icons.person,
+                    child:
+                        tutorImage ==
+                                null
+                            ? Icon(
 
-                      size: 60,
+                                Icons
+                                    .person,
 
-                      color:
-                          Colors.blue.shade300,
-                    ),
+                                size:
+                                    60,
+
+                                color: Colors
+                                    .blue
+                                    .shade300,
+                              )
+                            : null,
                   ),
 
                   const SizedBox(
                     height: 15,
                   ),
 
-                  const Text(
+                  Text(
 
-                    "Bienvenido Tutor",
+                    "Bienvenido $tutorName",
 
-                    style: TextStyle(
+                    style:
+                        const TextStyle(
 
-                      color: Colors.white,
+                      color:
+                          Colors.white,
 
                       fontSize: 24,
 
                       fontWeight:
-                          FontWeight.bold,
+                          FontWeight
+                              .bold,
                     ),
                   ),
 
@@ -154,7 +250,8 @@ class TutorHomeScreen extends StatelessWidget {
                         TextAlign.center,
 
                     style: TextStyle(
-                      color: Colors.white70,
+                      color:
+                          Colors.white70,
                     ),
                   ),
                 ],
@@ -221,6 +318,34 @@ class TutorHomeScreen extends StatelessWidget {
               },
             ),
 
+            /// ⚡ HISTORIAS
+            _modernButton(
+
+              context,
+
+              "Historias",
+
+              "Crear cuentos y preguntas para alumnos",
+
+              Icons.quiz,
+
+              Colors.purple,
+
+              () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const RapidQuestionsAdminScreen(),
+                  ),
+                );
+              },
+            ),
+
             /// 👤 PERFIL
             _modernButton(
 
@@ -234,18 +359,21 @@ class TutorHomeScreen extends StatelessWidget {
 
               Colors.blue,
 
-              () {
+              () async {
 
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(
+                await Navigator.push(
 
-                  const SnackBar(
+                  context,
 
-                    content: Text(
-                      "Perfil próximamente 😊",
-                    ),
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const TutorProfileScreen(),
                   ),
                 );
+
+                /// 🔄 RECARGAR FOTO
+                loadTutorData();
               },
             ),
           ],
@@ -286,9 +414,12 @@ class TutorHomeScreen extends StatelessWidget {
         child: Container(
 
           padding:
-              const EdgeInsets.all(20),
+              const EdgeInsets.all(
+            20,
+          ),
 
-          decoration: BoxDecoration(
+          decoration:
+              BoxDecoration(
 
             color: Colors.white,
 
@@ -300,9 +431,11 @@ class TutorHomeScreen extends StatelessWidget {
             boxShadow: const [
 
               BoxShadow(
-                color: Colors.black12,
+                color:
+                    Colors.black12,
                 blurRadius: 6,
-                offset: Offset(0, 3),
+                offset:
+                    Offset(0, 3),
               ),
             ],
           ),
@@ -318,10 +451,13 @@ class TutorHomeScreen extends StatelessWidget {
                   15,
                 ),
 
-                decoration: BoxDecoration(
+                decoration:
+                    BoxDecoration(
 
-                  color:
-                      color.withOpacity(0.15),
+                  color: color
+                      .withOpacity(
+                    0.15,
+                  ),
 
                   borderRadius:
                       BorderRadius.circular(
@@ -345,7 +481,8 @@ class TutorHomeScreen extends StatelessWidget {
                 child: Column(
 
                   crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      CrossAxisAlignment
+                          .start,
 
                   children: [
 
@@ -359,7 +496,8 @@ class TutorHomeScreen extends StatelessWidget {
                         fontSize: 20,
 
                         fontWeight:
-                            FontWeight.bold,
+                            FontWeight
+                                .bold,
                       ),
                     ),
 
@@ -368,10 +506,13 @@ class TutorHomeScreen extends StatelessWidget {
                     ),
 
                     Text(
+
                       subtitle,
+
                       style: TextStyle(
-                        color:
-                            Colors.grey.shade700,
+                        color: Colors
+                            .grey
+                            .shade700,
                       ),
                     ),
                   ],

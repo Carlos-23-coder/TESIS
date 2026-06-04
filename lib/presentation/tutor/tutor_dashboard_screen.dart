@@ -252,9 +252,24 @@ class _TutorDashboardScreenState
               sideTitles:
                   SideTitles(
                 showTitles: true,
+                reservedSize: 36,
+                getTitlesWidget:
+                    (value, meta) {
+                  return SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    child: Text(
+                    value.toInt()
+                        .toString(),
+                    style:
+                        const TextStyle(
+                          fontSize: 12,
+                        ),
+                    ),
+                  ); 
+                },
               ),
             ),
-
+          
             topTitles:
                 AxisTitles(
               sideTitles:
