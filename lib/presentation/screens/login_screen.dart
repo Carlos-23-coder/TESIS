@@ -226,15 +226,11 @@ class _LoginScreenState
 
                     children: [
 
-                      const Icon(
-
-                        Icons
-                            .menu_book_rounded,
-
-                        size: 60,
-
-                        color: Colors.blue,
+                      Image.asset(
+                        'assets/images/logo_uleam.png',
+                        height: 90,
                       ),
+ 
 
                       const SizedBox(
                         height: 15,

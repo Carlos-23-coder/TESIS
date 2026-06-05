@@ -181,7 +181,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
           Icon(
             Icons.card_giftcard,
             size: 80,
-            color: Colors.orange,
+            color: Colors.blueAccent,
           ),
           SizedBox(height: 15),
           Text("Agregar imagen"),
@@ -198,7 +198,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
           Icon(
             Icons.image_not_supported_outlined,
             size: 80,
-            color: Colors.orange,
+            color: Colors.blueAccent,
           ),
           SizedBox(height: 15),
           Text("Imagen no disponible"),
@@ -236,12 +236,12 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: Colors.orange.shade100,
+        color: Colors.blue.shade100,
         borderRadius: BorderRadius.circular(14),
       ),
       child: const Icon(
         Icons.card_giftcard,
-        color: Colors.orange,
+        color: Colors.blueAccent,
       ),
     );
   }
@@ -252,7 +252,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       backgroundColor: const Color(0xFFEAF6FF),
       appBar: AppBar(
         title: const Text("Recompensas"),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -271,13 +271,13 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.orange.shade200),
+                  border: Border.all(color: Colors.blue.shade200),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.edit, color: Colors.orange),
+                    const Icon(Icons.edit, color: Colors.blueAccent),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
@@ -298,7 +298,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
+                  color: Colors.blue.shade100,
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: const [
                     BoxShadow(
@@ -328,7 +328,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: Colors.blueAccent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: takePhoto,
@@ -476,7 +476,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                             onPressed: () => _startEditingReward(reward),
                             icon: const Icon(
                               Icons.edit,
-                              color: Colors.orange,
+                              color: Colors.blueAccent,
                             ),
                           ),
                         ],

@@ -33,12 +33,15 @@ class _StudentRewardsScreenState
         elevation: 0,
 
         backgroundColor:
-            Colors.orange,
+            Colors.blueAccent,
 
         centerTitle: true,
 
         title: const Text(
-          "🎁 Recompensas",
+          "Mis Recompensas",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
 
@@ -64,8 +67,8 @@ class _StudentRewardsScreenState
 
                 colors: [
 
-                  Colors.orange.shade300,
-                  Colors.orange.shade500,
+                  Color(0xFF64B5F6),
+                    Color(0xFF1976D2),
                 ],
               ),
 
@@ -213,11 +216,12 @@ class _StudentRewardsScreenState
                           25,
                         ),
 
-                        boxShadow: const [
+                        boxShadow: [
 
                           BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
+                            color: Colors.blue.withOpacity(0.12),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
@@ -241,7 +245,7 @@ class _StudentRewardsScreenState
                                 BoxDecoration(
 
                               color:
-                                  Colors.orange
+                                  Colors.blue
                                       .shade100,
 
                               borderRadius:
@@ -304,7 +308,7 @@ class _StudentRewardsScreenState
                                               size: 80,
 
                                               color:
-                                                  Colors.orange,
+                                                  Colors.blueAccent,
                                             );
                                           },
                                         ),
@@ -316,7 +320,7 @@ class _StudentRewardsScreenState
 
                                         size: 80,
 
-                                        color: Colors.orange,
+                                        color: Colors.blueAccent,
                                       ),
                           ),
 
