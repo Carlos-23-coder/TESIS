@@ -229,25 +229,16 @@ class _StudentProfileScreenState
       localImage = savedImage;
     });
 
-    /// ☁️ SUBIR A FIREBASE
-    final url =
-        await _profileRepository
-            .uploadProfileImage(
-      user!.email!,
-      savedImage,
-    );
-
-    /// 💾 GUARDAR URL
-    await _profileRepository
-        .savePhotoUrl(
-      user!.email!,
-      url,
-    );
+      await _profileRepository
+          .savePhotoUrl(
+        user!.email!,
+        savedImage.path,
+      );
 
     setState(() {
-      photoUrl = url;
+      localImage = savedImage;
+      photoUrl = savedImage.path;
     });
-
     if (!mounted) return;
 
     ScaffoldMessenger.of(this.context)

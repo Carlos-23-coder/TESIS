@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/progress_repository.dart';
@@ -105,14 +107,16 @@ class _StudentProgressScreenState
                         Colors.white,
 
                     backgroundImage:
-                        widget.student[
-                                    "photoUrl"] !=
-                                null
-                            ? NetworkImage(
-                                widget.student[
-                                    "photoUrl"],
-                              )
-                            : null,
+                      widget.student["photoUrl"] != null &&
+                              widget.student["photoUrl"]
+                                  .toString()
+                                  .isNotEmpty
+                          ? FileImage(
+                              File(
+                                widget.student["photoUrl"],
+                              ),
+                            )
+                          : null,
 
                     child:
                         widget.student[

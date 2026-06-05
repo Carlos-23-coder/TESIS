@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/repositories/tutor_repository.dart';
@@ -143,17 +142,12 @@ class _TutorProfileScreenState
     final directory =
         await getApplicationDocumentsDirectory();
 
-    final fileName =
-        basename(
-      picked.path,
-    );
-
     final savedImage =
         await File(
-      picked.path,
-    ).copy(
-      '${directory.path}/$fileName',
-    );
+          picked.path,
+          ).copy(
+          '${directory.path}/${user!.email}.jpg',
+        );
 
     /// 💾 GUARDAR RUTA LOCAL
     await _repository
