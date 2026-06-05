@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -127,11 +128,29 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       return;
     }
 
+    String imagePath =
+    _editingReward?.imagePath ?? "";
+
+      if (selectedImage != null) {
+
+        final directory =
+            await getApplicationDocumentsDirectory();
+
+        final savedImage =
+            await File(
+              selectedImage!.path,
+            ).copy(
+          '${directory.path}/reward_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+
+        imagePath = savedImage.path;
+      }
+
     final reward = RewardModel(
       id: _editingReward?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       category: category,
-      imagePath: selectedImage?.path ?? _editingReward?.imagePath ?? "",
+      imagePath: imagePath,
       requiredStars: stars,
       tutorEmail: tutorEmail,
     );

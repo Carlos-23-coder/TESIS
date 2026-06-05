@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -287,31 +288,31 @@ class _StudentRewardsScreenState
                                         ),
 
                                         child:
-                                            Image.asset(
+                                            Image.file(
 
-                                          data["imagePath"],
+                                              File(
+                                                data["imagePath"],
+                                              ),
 
-                                          fit:
-                                              BoxFit.cover,
+                                              fit: BoxFit.cover,
 
-                                          errorBuilder:
-                                              (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
+                                              errorBuilder:
+                                                  (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) {
 
-                                            return const Icon(
+                                                return const Icon(
 
-                                              Icons.card_giftcard,
+                                                  Icons.card_giftcard,
 
-                                              size: 80,
+                                                  size: 80,
 
-                                              color:
-                                                  Colors.blueAccent,
-                                            );
-                                          },
-                                        ),
+                                                  color: Colors.blue,
+                                                );
+                                              },
+                                            )
                                       )
 
                                     : const Icon(
