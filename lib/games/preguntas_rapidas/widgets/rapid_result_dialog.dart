@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-class RapidResultDialog
-    extends StatelessWidget {
-
+class RapidResultDialog extends StatelessWidget {
   final int correctAnswers;
   final int totalQuestions;
   final int earnedStars;
@@ -19,161 +17,140 @@ class RapidResultDialog
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-
-    final bool perfect =
-        earnedStars == 3;
+  Widget build(BuildContext context) {
+    final bool success = earnedStars > 0;
 
     return Dialog(
-
       shape: RoundedRectangleBorder(
-
-        borderRadius:
-            BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
       ),
-
-      child: Container(
-
-        padding:
-            const EdgeInsets.all(30),
-
-        decoration: BoxDecoration(
-
-          color: Colors.white,
-
-          borderRadius:
-              BorderRadius.circular(20),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 400,
         ),
-
-        child: Column(
-
-          mainAxisSize:
-              MainAxisSize.min,
-
-          children: [
-
-            /// 🎉 EMOJI
-            Text(
-
-              perfect
-                  ? "🎉"
-                  : "✅",
-
-              style: const TextStyle(
-                fontSize: 60,
-              ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 25,
             ),
-
-            const SizedBox(height: 20),
-
-            /// 📊 RESULTADO
-            Text(
-
-              "$correctAnswers de $totalQuestions",
-
-              style:
-                  const TextStyle(
-
-                fontSize: 28,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            /// ⭐ ESTRELLAS
-            Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .center,
-
-              children:
-                  List.generate(
-
-                3,
-
-                (index) => Padding(
-
-                  padding:
-                      const EdgeInsets
-                          .symmetric(
-                    horizontal: 5,
-                  ),
-
-                  child: Icon(
-
-                    index < earnedStars
-                        ? Icons.star
-                        : Icons.star_border,
-
-                    color: Colors.amber,
-                    size: 40,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            /// 🔘 BOTONES
-            Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceEvenly,
-
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-
-                /// REINTENTAR
-                ElevatedButton.icon(
-
-                  onPressed: onRetry,
-
-                  icon: const Icon(
-                    Icons.refresh,
-                  ),
-
-                  label: const Text(
-                    "Reintentar",
-                  ),
-
-                  style:
-                      ElevatedButton
-                          .styleFrom(
-
-                    backgroundColor:
-                        Colors.orange,
+                Text(
+                  success ? "✅" : "❌",
+                  style: const TextStyle(
+                    fontSize: 60,
                   ),
                 ),
 
-                /// VOLVER
-                ElevatedButton.icon(
+                const SizedBox(height: 20),
 
-                  onPressed: onBack,
-
-                  icon: const Icon(
-                    Icons.arrow_back,
+                Text(
+                  success
+                      ? "¡Nivel completado!"
+                      : "¡Inténtalo de nuevo!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        success ? Colors.green : Colors.red,
                   ),
+                ),
 
-                  label: const Text(
-                    "Volver",
+                const SizedBox(height: 15),
+
+                Text(
+                  "$correctAnswers de $totalQuestions respuestas correctas",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
                   ),
+                ),
 
-                  style:
-                      ElevatedButton
-                          .styleFrom(
+                const SizedBox(height: 20),
 
-                    backgroundColor:
-                        Colors.blue,
+                Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (index) => Padding(
+                      padding:
+                          const EdgeInsets.symmetric(
+                        horizontal: 5,
+                      ),
+                      child: Icon(
+                        index < earnedStars
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: Colors.amber,
+                        size: 40,
+                      ),
+                    ),
                   ),
+                ),
+
+               const SizedBox(height: 30),
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: onRetry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                          ),
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              "Reintentar",
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: onBack,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                          ),
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              "Volver",
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

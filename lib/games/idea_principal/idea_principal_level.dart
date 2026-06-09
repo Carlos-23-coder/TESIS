@@ -217,7 +217,7 @@ class _IdeaPrincipalLevelState
                     Colors.green,
 
                 content: Text(
-                  "🎉 ¡Completaste todos los niveles!",
+                  "🎉 Has completado los niveles disponibles",
                 ),
               ),
             );

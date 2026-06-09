@@ -74,5 +74,36 @@ final List<IdeaLevel> ideaLevels = [
 
     correctAnswer: 0,
   ),
+  /// ⭐ NIVEL 3
+IdeaLevel(
+  level: 3,
+
+  story:
+      "Ana estaba preocupada porque el patio de su escuela "
+      "tenía muchos papeles y botellas tiradas en el suelo. "
+      "Decidió hablar con sus compañeros para organizar una "
+      "jornada de limpieza. Todos participaron recogiendo "
+      "basura y separando los residuos reciclables. "
+      "Al finalizar, el patio quedó limpio y ordenado. "
+      "Los estudiantes se sintieron orgullosos de haber "
+      "trabajado juntos para cuidar su escuela.",
+
+  image: 'assets/images/cuento3.png',
+
+  question:
+      "¿Cuál es la idea principal de la historia?",
+
+  options: [
+
+    "Los estudiantes trabajaron juntos para limpiar y cuidar su escuela.",
+
+    "Ana encontró muchas botellas en el patio.",
+
+    "Los alumnos aprendieron a reciclar.",
+
+  ],
+
+  correctAnswer: 0,
+),
 
 ];

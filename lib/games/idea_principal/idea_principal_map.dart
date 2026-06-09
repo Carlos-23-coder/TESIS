@@ -112,6 +112,7 @@ class _IdeaPrincipalMapState
   ) {
 
     final level = index + 1;
+    final bool comingSoon = level > 3;
 
     /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
@@ -119,12 +120,22 @@ class _IdeaPrincipalMapState
         GameProgress.getStars(index);
 
     /// 🔓 DESBLOQUEAR NIVEL
-    final bool unlocked =
-        level == 1 ||
-        (
-          starsMap[index - 1] ??
-          GameProgress.getStars(index - 1)
-        ) > 0;
+    final bool unlocked;
+
+    if (level == 1) {
+
+      unlocked = true;
+
+    } else if (comingSoon) {
+
+      unlocked = false;
+
+    } else {
+
+      unlocked =
+          (starsMap[index - 1] ??
+          GameProgress.getStars(index - 1)) > 0;
+    }
 
     return Padding(
 
@@ -158,25 +169,39 @@ class _IdeaPrincipalMapState
           GestureDetector(
 
             onTap: unlocked
-                ? () async {
+            ? () async {
 
-                    /// ABRIR NIVEL
-                    await Navigator.push(
+                /// SOLO EXISTEN LOS NIVELES 1, 2 Y 3
+                if (level > 3) {
 
-                      context,
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(
 
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            IdeaPrincipalLevel(
-                          levelIndex: index,
-                        ),
+                    const SnackBar(
+                      content: Text(
+                        "🚧 Próximamente",
                       ),
-                    );
+                    ),
+                  );
 
-                    /// 🔥 RECARGAR PROGRESO
-                    await loadProgress();
-                  }
-                : null,
+                  return;
+                }
+
+                await Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        IdeaPrincipalLevel(
+                      levelIndex: index,
+                    ),
+                  ),
+                );
+
+                await loadProgress();
+              }
+            : null,
 
             child: AnimatedContainer(
 
@@ -226,6 +251,7 @@ class _IdeaPrincipalMapState
                 children: [
 
                   Icon(
+
                     unlocked
                         ? Icons.star
                         : Icons.lock,
@@ -241,12 +267,11 @@ class _IdeaPrincipalMapState
 
                     style: const TextStyle(
                       fontSize: 28,
-                      fontWeight:
-                          FontWeight.bold,
-
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
+                  
                 ],
               ),
             ),
