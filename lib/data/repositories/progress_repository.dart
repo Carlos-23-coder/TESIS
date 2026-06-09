@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../core/game_engine/game_progress.dart';
 import '../database/database_helper.dart';
 import '../models/progress_model.dart';
 
@@ -18,9 +19,31 @@ class ProgressRepository {
 
     try {
 
+      final cappedStars = progress.stars.clamp(0, 3);
+
+      final existing = await _getLevelProgress(
+        progress.userId,
+        progress.game,
+        progress.level,
+      );
+
+      final existingStars =
+          (existing?['stars'] ?? 0) as int;
+
+      if (cappedStars <= existingStars) {
+        return;
+      }
+
+      final updated = ProgressModel(
+        userId: progress.userId,
+        level: progress.level,
+        stars: cappedStars,
+        game: progress.game,
+      );
+
       /// 📱 GUARDAR OFFLINE PRIMERO
       await _saveProgressOffline(
-        progress,
+        updated,
       );
 
       /// 🌐 INTENTA SINCRONIZAR CON FIREBASE
@@ -29,10 +52,10 @@ class ProgressRepository {
         await _firestore
             .collection("progress")
             .doc(
-              "${progress.userId}_${progress.game}_${progress.level}",
+              "${updated.userId}_${updated.game}_${updated.level}",
             )
             .set(
-              progress.toMap(),
+              updated.toMap(),
             );
 
         /// 📤 MARCAR COMO SINCRONIZADO
@@ -50,9 +73,9 @@ class ProgressRepository {
           ''',
 
           whereArgs: [
-            progress.userId,
-            progress.game,
-            progress.level,
+            updated.userId,
+            updated.game,
+            updated.level,
           ],
         );
 
@@ -71,6 +94,39 @@ class ProgressRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> _getLevelProgress(
+    String userId,
+    String game,
+    int level,
+  ) async {
+    try {
+      final db = await _dbHelper.database;
+
+      final results = await db.query(
+        'progress',
+        where: 'email = ? AND game = ? AND level = ?',
+        whereArgs: [userId, game, level],
+      );
+
+      if (results.isNotEmpty) {
+        return results.first;
+      }
+    } catch (_) {}
+
+    try {
+      final doc = await _firestore
+          .collection('progress')
+          .doc('${userId}_${game}_$level')
+          .get();
+
+      if (doc.exists) {
+        return doc.data();
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
   /// 📱 GUARDAR OFFLINE
   Future<void> _saveProgressOffline(
     ProgressModel progress,
@@ -87,7 +143,7 @@ class ProgressRepository {
 
         'email': progress.userId,
         'game': progress.game,
-        'stars': progress.stars ?? 0,
+        'stars': progress.stars.clamp(0, 3),
         'level': progress.level,
         'date': DateTime.now().toIso8601String(),
         'synced': 0,
@@ -198,15 +254,70 @@ class ProgressRepository {
       userId,
     );
 
-    int total = 0;
+    final bestByLevel = <String, int>{};
 
     for (var doc in progress) {
+      final game = doc['game']?.toString() ?? '';
+      final level = doc['level'] ?? 0;
+      final stars =
+          ((doc['stars'] ?? 0) as int).clamp(0, 3);
 
-      total +=
-          (doc["stars"] ?? 0) as int;
+      if (game.isEmpty) continue;
+
+      final key = '${game}_$level';
+      final current = bestByLevel[key] ?? 0;
+
+      if (stars > current) {
+        bestByLevel[key] = stars;
+      }
     }
 
-    return total;
+    return bestByLevel.values.fold<int>(
+      0,
+      (total, stars) => total + stars,
+    );
+  }
+
+  /// 🔄 RESETEAR PROGRESO DE UN ALUMNO (PARA PRUEBAS)
+  Future<void> resetStudentProgress(
+    String userId,
+  ) async {
+    GameProgress.clear();
+
+    final db = await _dbHelper.database;
+
+    await db.delete(
+      'progress',
+      where: 'email = ?',
+      whereArgs: [userId],
+    );
+
+    try {
+      final snapshot = await _firestore
+          .collection('progress')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      print('ERROR RESETEAR PROGRESO FIREBASE: $e');
+    }
+
+    try {
+      final subSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('progress')
+          .get();
+
+      for (final doc in subSnapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      print('ERROR RESETEAR SUBCOLECCIÓN PROGRESO: $e');
+    }
   }
 
   /// 📊 TODOS LOS PROGRESOS

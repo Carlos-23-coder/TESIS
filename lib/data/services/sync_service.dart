@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -58,7 +60,8 @@ class SyncService {
 
         _syncProgress(),
         _syncRewards(),
-        _syncRapidQuestions(),
+        _syncStoryOverrides(),
+        _syncRewardClaims(),
       ]);
 
       print(
@@ -105,14 +108,13 @@ class SyncService {
               item['level'] as int;
 
           await _firestore
-              .collection('users')
-              .doc(email)
               .collection('progress')
-              .doc("${game}_$level")
+              .doc('${email}_${game}_$level')
               .set({
 
+            'userId': email,
             'game': game,
-            'stars': item['stars'],
+            'stars': (item['stars'] as int).clamp(0, 3),
             'level': level,
 
             'date':
@@ -227,62 +229,71 @@ class SyncService {
     }
   }
 
-  /// ❓ SINCRONIZAR PREGUNTAS RÁPIDAS
-  Future<void> _syncRapidQuestions() async {
+  /// 📚 SINCRONIZAR HISTORIAS PERSONALIZADAS
+  Future<void> _syncStoryOverrides() async {
 
     try {
 
       final db =
           await _dbHelper.database;
 
-      /// 🔍 OBTENER DATOS NO SINCRONIZADOS
-      final unsyncedQuestions =
+      final unsyncedStories =
           await db.query(
 
-        'rapid_questions',
+        'story_overrides',
 
         where: 'synced = 0',
       );
 
-      for (var item in unsyncedQuestions) {
+      for (var item in unsyncedStories) {
 
         try {
 
-          /// 📤 SUBIR A FIREBASE
-          final level = item['level'] as int;
+          final id = item['id'] as String;
+
+          final optionsJson = item['optionsJson'] as String? ?? '[]';
+          final questionsJson = item['questionsJson'] as String? ?? '[]';
 
           await _firestore
-              .collection("rapid_questions")
-              .doc("level_$level")
+              .collection("story_overrides")
+              .doc(id)
               .set({
 
-            'level': level,
+            'id': id,
+            'tutorEmail': item['tutorEmail'],
+            'game': item['game'],
+            'level': item['level'],
             'title': item['title'],
             'story': item['story'],
+            'imagePath': item['imagePath'],
             'imageUrl': item['imageUrl'],
+            'question': item['question'],
+            'options': jsonDecode(optionsJson),
+            'correctAnswer': item['correctAnswer'],
+            'questions': jsonDecode(questionsJson),
+            'isNewLevel': item['isNewLevel'] == 1,
             'date': item['date'],
           });
 
-          /// ✅ MARCAR COMO SINCRONIZADO
           await db.update(
 
-            'rapid_questions',
+            'story_overrides',
 
             {'synced': 1},
 
-            where: 'level = ?',
+            where: 'id = ?',
 
-            whereArgs: [level],
+            whereArgs: [id],
           );
 
           print(
-            "✅ Pregunta rápida sincronizada: level $level",
+            "✅ Historia sincronizada: $id",
           );
 
         } catch (e) {
 
           print(
-            "❌ Error sincronizando pregunta rápida: $e",
+            "❌ Error sincronizando historia: $e",
           );
         }
       }
@@ -290,7 +301,54 @@ class SyncService {
     } catch (e) {
 
       print(
-        "ERROR EN _syncRapidQuestions: $e",
+        "ERROR EN _syncStoryOverrides: $e",
+      );
+    }
+  }
+
+  /// 🔔 SINCRONIZAR SOLICITUDES DE RECOMPENSAS
+  Future<void> _syncRewardClaims() async {
+    try {
+      final db = await _dbHelper.database;
+
+      final unsyncedClaims = await db.query(
+        'reward_claims',
+        where: 'synced = 0',
+      );
+
+      for (var item in unsyncedClaims) {
+        try {
+          final id = item['id'] as String;
+
+          await _firestore
+              .collection('reward_claims')
+              .doc(id)
+              .set({
+            'id': id,
+            'studentEmail': item['studentEmail'],
+            'studentName': item['studentName'],
+            'rewardId': item['rewardId'],
+            'rewardName': item['rewardName'],
+            'tutorEmail': item['tutorEmail'],
+            'status': item['status'],
+            'date': item['date'],
+          });
+
+          await db.update(
+            'reward_claims',
+            {'synced': 1},
+            where: 'id = ?',
+            whereArgs: [id],
+          );
+        } catch (e) {
+          print(
+            "❌ Error sincronizando solicitud de recompensa: $e",
+          );
+        }
+      }
+    } catch (e) {
+      print(
+        "ERROR EN _syncRewardClaims: $e",
       );
     }
   }

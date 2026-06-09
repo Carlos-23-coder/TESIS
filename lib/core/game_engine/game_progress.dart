@@ -1,18 +1,34 @@
 class GameProgress {
 
-  /// NIVEL : ESTRELLAS
-  static Map<int, int> earnedStars = {};
+  /// CLAVE: "juego_nivel" → estrellas (máx. 3)
+  static Map<String, int> earnedStars = {};
 
-  static void saveStars(
-    int level,
-    int stars,
-  ) {
-
-    earnedStars[level] = stars;
+  static String _key(String game, int levelIndex) {
+    return '${game}_$levelIndex';
   }
 
-  static int getStars(int level) {
+  static void saveStars(
+    String game,
+    int levelIndex,
+    int stars,
+  ) {
+    final capped = stars.clamp(0, 3);
+    final key = _key(game, levelIndex);
+    final current = earnedStars[key] ?? 0;
 
-    return earnedStars[level] ?? 0;
+    if (capped > current) {
+      earnedStars[key] = capped;
+    }
+  }
+
+  static int getStars(
+    String game,
+    int levelIndex,
+  ) {
+    return earnedStars[_key(game, levelIndex)] ?? 0;
+  }
+
+  static void clear() {
+    earnedStars.clear();
   }
 }

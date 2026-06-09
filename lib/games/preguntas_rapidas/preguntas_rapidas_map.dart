@@ -1,132 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../data/repositories/rapid_questions_repository.dart';
 import '../../core/game_engine/game_progress.dart';
+import '../../data/models/story_override_model.dart';
 import '../../data/repositories/progress_repository.dart';
+import '../../data/repositories/story_repository.dart';
+import '../../data/services/tutor_resolver.dart';
 
 import 'preguntas_rapidas_level.dart';
 
-class PreguntasRapidasMap
-    extends StatefulWidget {
-
-  const PreguntasRapidasMap({
-    super.key,
-  });
+class PreguntasRapidasMap extends StatefulWidget {
+  const PreguntasRapidasMap({super.key});
 
   @override
-  State<PreguntasRapidasMap>
-      createState() =>
-          _PreguntasRapidasMapState();
+  State<PreguntasRapidasMap> createState() =>
+      _PreguntasRapidasMapState();
 }
 
 class _PreguntasRapidasMapState
     extends State<PreguntasRapidasMap> {
+  final ProgressRepository _progressRepository =
+      ProgressRepository();
 
+  final StoryRepository _storyRepository =
+      StoryRepository();
 
-  /// 🔥 REPOSITORIO DE PROGRESO
-  final ProgressRepository
-      _progressRepository =
-          ProgressRepository();
-  
-  /// 📚 REPOSITORIO DE PREGUNTAS
-  final RapidQuestionsRepository
-      _questionsRepository =
-        RapidQuestionsRepository();
+  final user = FirebaseAuth.instance.currentUser;
 
-  /// 👤 USUARIO ACTUAL
-  final user =
-      FirebaseAuth.instance.currentUser;
-
-  /// 📚 NIVELES
-  static const int totalLevels = 10;
-
-  /// ⭐ ESTRELLAS
   Map<int, int> starsMap = {};
-
+  List<int> availableLevels = [];
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
-
     loadLevelsAndProgress();
   }
 
-  /// 📚 CARGAR NIVELES Y PROGRESO
-  Future<void>
-      loadLevelsAndProgress() async {
+  Future<void> loadLevelsAndProgress() async {
+    final tutorEmail = await TutorResolver.resolveTutorEmail();
 
-    /// CARGAR PROGRESO
+    final levels = await _storyRepository.listLevels(
+      tutorEmail: tutorEmail,
+      game: StoryGameType.preguntasRapidas,
+    );
+
     if (user != null) {
-
-      final progress =
-          await _progressRepository
-              .getStudentProgress(
+      final progress = await _progressRepository.getStudentProgress(
         user!.email!,
       );
 
-      Map<int, int> loadedStars = {};
+      final loadedStars = <int, int>{};
 
       for (var item in progress) {
+        if (item['game'] != 'preguntas_rapidas') continue;
 
-        final int level =
-            item["level"] ?? 1;
-
+        final int level = item['level'] ?? 1;
         final int stars =
-            item["stars"] ?? 0;
+            ((item['stars'] ?? 0) as int).clamp(0, 3);
+        final levelIndex = level - 1;
+        final current = loadedStars[levelIndex] ?? 0;
 
-        /// ⭐ GUARDAR EN MAPA
-        loadedStars[level - 1] = stars;
-
-        /// 💾 GUARDAR LOCAL
-        GameProgress.saveStars(
-          level - 1,
-          stars,
-        );
+        if (stars > current) {
+          loadedStars[levelIndex] = stars;
+          GameProgress.saveStars(
+            'preguntas_rapidas',
+            levelIndex,
+            stars,
+          );
+        }
       }
 
-      setState(() {
-        starsMap = loadedStars;
-      });
+      starsMap = loadedStars;
     }
 
+    if (!mounted) return;
+
     setState(() {
+      availableLevels = levels.map((item) => item.level).toList();
       loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xFFEAF6FF),
-
+      backgroundColor: const Color(0xFFEAF6FF),
       appBar: AppBar(
-        title: const Text(
-          "Preguntas Rápidas",
-        ),
+        title: const Text('Preguntas Rápidas'),
         centerTitle: true,
       ),
-
       body: loading
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-
               child: Column(
-
                 children: [
-
                   const SizedBox(height: 30),
-
-                  for (int i = 0; i < totalLevels; i++)
-                    _levelItem(context, i),
-
+                  for (int i = 0; i < availableLevels.length; i++)
+                    _levelItem(
+                      context,
+                      availableLevels[i],
+                      i,
+                    ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -134,178 +109,140 @@ class _PreguntasRapidasMapState
     );
   }
 
-/// 🎮 ITEM DE NIVEL
-Widget _levelItem(
-  BuildContext context,
-  int index,
-) {
-  final level = index + 1;
+  Widget _levelItem(
+    BuildContext context,
+    int level,
+    int displayIndex,
+  ) {
+    final index = level - 1;
 
-  /// Solo existen hasta el nivel 3
-  final bool comingSoon = level > 3;
+    final stars = starsMap[index] ??
+        GameProgress.getStars(
+          'preguntas_rapidas',
+          index,
+        );
 
-  /// ⭐ ESTRELLAS DEL NIVEL
-  final stars =
-      starsMap[index] ??
-      GameProgress.getStars(index);
+    final bool unlocked;
 
-  /// 🔓 DESBLOQUEO
-  final bool unlocked;
+    if (level == 1) {
+      unlocked = true;
+    } else {
+      final previousIndex = availableLevels[displayIndex - 1] - 1;
 
-  if (level == 1) {
-    unlocked = true;
-  } else if (comingSoon) {
-    unlocked = false;
-  } else {
-    unlocked =
-        (starsMap[index - 1] ??
-                GameProgress.getStars(index - 1)) >
-            0;
-  }
+      unlocked = (starsMap[previousIndex] ??
+              GameProgress.getStars(
+                'preguntas_rapidas',
+                previousIndex,
+              )) >
+          0;
+    }
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(
-      vertical: 20,
-    ),
-    child: Column(
-      children: [
-        /// 🛣️ CAMINO
-        if (index != 0)
-          Container(
-            width: 8,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade200,
-              borderRadius:
-                  BorderRadius.circular(
-                20,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          if (displayIndex != 0)
+            Container(
+              width: 8,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade200,
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
-          ),
+          GestureDetector(
+            onTap: unlocked
+                ? () async {
+                    final tutorEmail =
+                        await TutorResolver.resolveTutorEmail();
 
-        /// 🎮 BOTÓN NIVEL
-        GestureDetector(
-          onTap: unlocked
-              ? () async {
-                  final rapidLevel =
-                      await _questionsRepository
-                          .getLevel(level);
+                    final rapidLevel =
+                        await _storyRepository.getEffectiveRapidLevel(
+                      tutorEmail: tutorEmail,
+                      level: level,
+                    );
 
-                  if (rapidLevel == null) {
-                    if (!mounted) return;
+                    if (rapidLevel == null) {
+                      if (!mounted) return;
 
-                    ScaffoldMessenger.of(
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se pudo cargar el nivel'),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    await Navigator.push(
                       context,
-                    ).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "No se pudo cargar el nivel",
+                      MaterialPageRoute(
+                        builder: (_) => PreguntasRapidasLevel(
+                          level: rapidLevel,
+                          availableLevels: availableLevels,
                         ),
                       ),
                     );
 
-                    return;
+                    await loadLevelsAndProgress();
                   }
-
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          PreguntasRapidasLevel(
-                        level: rapidLevel,
-                      ),
-                    ),
-                  );
-
-                  await loadLevelsAndProgress();
-                }
-              : null,
-
-          child: AnimatedContainer(
-            duration: const Duration(
-              milliseconds: 300,
-            ),
-
-            width: 110,
-            height: 110,
-
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-
-              gradient: LinearGradient(
-                colors: unlocked
-                    ? [
-                        Colors.blue,
-                        Colors.cyan,
-                      ]
-                    : [
-                        Colors.grey,
-                        Colors.black38,
-                      ],
-              ),
-
-              boxShadow: [
-                BoxShadow(
-                  color: unlocked
-                      ? Colors.cyanAccent
-                      : Colors.black26,
-                  blurRadius: 10,
-                  spreadRadius: 2,
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: unlocked
+                      ? [Colors.blue, Colors.cyan]
+                      : [Colors.grey, Colors.black38],
                 ),
-              ],
-            ),
-
-            child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
-              children: [
-                Icon(
-                  unlocked
-                      ? Icons.quiz
-                      : Icons.lock,
-                  color: Colors.white,
-                  size: 30,
-                ),
-
-                const SizedBox(
-                  height: 5,
-                ),
-
-                Text(
-                  "$level",
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight:
-                        FontWeight.bold,
-                    color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: unlocked
+                        ? Colors.cyanAccent
+                        : Colors.black26,
+                    blurRadius: 10,
+                    spreadRadius: 2,
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    unlocked ? Icons.quiz : Icons.lock,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '$level',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-
-        const SizedBox(
-          height: 10,
-        ),
-
-        /// ⭐ ESTRELLAS
-        Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: List.generate(
-            3,
-            (star) => Icon(
-              star < stars
-                  ? Icons.star
-                  : Icons.star_border,
-              color: Colors.amber,
-              size: 24,
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (star) => Icon(
+                star < stars ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+                size: 24,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter/material.dart';
 
+import '../../data/repositories/reward_claim_repository.dart';
 import '../../data/repositories/tutor_repository.dart';
 
-import '../tutor/rapid_questions_admin_screen.dart';
+import '../tutor/tutor_reward_claims_screen.dart';
+import '../tutor/stories_admin_screen.dart';
 import '../tutor/tutor_profile_screen.dart';
 
 import 'tutor_rewards_screen.dart';
@@ -28,6 +30,10 @@ class _TutorHomeScreenState
   final TutorRepository
       _repository =
           TutorRepository();
+
+  final RewardClaimRepository
+      _claimRepository =
+          RewardClaimRepository();
 
   File? tutorImage;
 
@@ -124,6 +130,60 @@ Future<void> loadTutorData() async {
         ),
 
         actions: [
+
+          StreamBuilder(
+            stream: FirebaseAuth.instance.currentUser?.email == null
+                ? const Stream.empty()
+                : _claimRepository.watchPendingClaimsForTutor(
+                    FirebaseAuth.instance.currentUser!.email!,
+                  ),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.length ?? 0;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const TutorRewardClaimsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          '$count',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
 
           IconButton(
 
@@ -290,6 +350,34 @@ Future<void> loadTutorData() async {
               },
             ),
 
+            /// 🔔 SOLICITUDES
+            _modernButton(
+
+              context,
+
+              "Solicitudes",
+
+              "Aprueba recompensas de alumnos",
+
+              Icons.notifications_active,
+
+              Colors.deepOrange,
+
+              () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const TutorRewardClaimsScreen(),
+                  ),
+                );
+              },
+            ),
+
             /// 👨‍🎓 MI GRUPO
             _modernButton(
 
@@ -325,7 +413,7 @@ Future<void> loadTutorData() async {
 
               "Historias",
 
-              "Crear cuentos y preguntas para alumnos",
+              "Personaliza historias y preguntas predeterminadas",
 
               Icons.quiz,
 
@@ -340,7 +428,7 @@ Future<void> loadTutorData() async {
                   MaterialPageRoute(
 
                     builder: (_) =>
-                        const RapidQuestionsAdminScreen(),
+                        const StoriesAdminScreen(),
                   ),
                 );
               },

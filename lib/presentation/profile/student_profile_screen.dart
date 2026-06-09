@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/repositories/profile_repository.dart';
@@ -61,20 +60,9 @@ class _StudentProfileScreenState
 
     if (user == null) return;
 
-    final progress =
-        await _progressRepository
-            .getStudentProgress(
+    final stars = await _progressRepository.getTotalStars(
       user!.email!,
     );
-
-    int stars = 0;
-
-    for (var item in progress) {
-
-      stars +=
-          (item["stars"] ?? 0)
-              as int;
-    }
 
     setState(() {
       totalStars = stars;

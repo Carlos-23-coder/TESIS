@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 
 class RapidResultDialog extends StatelessWidget {
+  final bool success;
   final int correctAnswers;
   final int totalQuestions;
   final int earnedStars;
   final VoidCallback onRetry;
+  final VoidCallback onNextLevel;
   final VoidCallback onBack;
 
   const RapidResultDialog({
     super.key,
+    required this.success,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.earnedStars,
     required this.onRetry,
+    required this.onNextLevel,
     required this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool success = earnedStars > 0;
-
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -54,64 +56,65 @@ class RapidResultDialog extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color:
-                        success ? Colors.green : Colors.red,
+                    color: success ? Colors.green : Colors.red,
                   ),
                 ),
 
                 const SizedBox(height: 15),
 
                 Text(
-                  "$correctAnswers de $totalQuestions respuestas correctas",
+                  success
+                      ? "$correctAnswers de $totalQuestions respuestas correctas"
+                      : "Lee la historia con atención e inténtalo otra vez.",
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 18,
                   ),
                 ),
 
-                const SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-                  children: List.generate(
-                    3,
-                    (index) => Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 5,
-                      ),
-                      child: Icon(
-                        index < earnedStars
-                            ? Icons.star
-                            : Icons.star_border,
-                        color: Colors.amber,
-                        size: 40,
+                if (success) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      3,
+                      (index) => Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                        ),
+                        child: Icon(
+                          index < earnedStars
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                          size: 40,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
 
-               const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
                 Row(
                   children: [
-
                     Expanded(
                       child: SizedBox(
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: onRetry,
+                          onPressed:
+                              success ? onBack : onRetry,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
+                            backgroundColor:
+                                success ? Colors.blue : Colors.orange,
                           ),
-                          child: const FittedBox(
+                          child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              "Reintentar",
+                              success ? "Volver" : "Reintentar",
                               maxLines: 1,
                               softWrap: false,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -127,17 +130,19 @@ class RapidResultDialog extends StatelessWidget {
                       child: SizedBox(
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: onBack,
+                          onPressed:
+                              success ? onNextLevel : onBack,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor:
+                                success ? Colors.green : Colors.blue,
                           ),
-                          child: const FittedBox(
+                          child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              "Volver",
+                              success ? "Siguiente" : "Volver",
                               maxLines: 1,
                               softWrap: false,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                               ),

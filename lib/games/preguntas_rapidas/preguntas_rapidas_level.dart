@@ -5,9 +5,12 @@
   import 'package:firebase_auth/firebase_auth.dart';
   import 'package:flutter_tts/flutter_tts.dart';
 
+  import '../../core/widgets/story_image.dart';
   import '../../core/game_engine/game_progress.dart';
   import '../../data/models/progress_model.dart';
   import '../../data/repositories/progress_repository.dart';
+  import '../../data/repositories/story_repository.dart';
+  import '../../data/services/tutor_resolver.dart';
 
   import '../../../data/models/rapid_question_model.dart';
   import 'widgets/rapid_result_dialog.dart';
@@ -15,12 +18,13 @@
   class PreguntasRapidasLevel
       extends StatefulWidget {
 
-    final RapidQuestionModel
-        level;
+    final RapidQuestionModel level;
+    final List<int> availableLevels;
 
     const PreguntasRapidasLevel({
       super.key,
       required this.level,
+      required this.availableLevels,
     });
 
     @override
@@ -42,6 +46,10 @@
     final ProgressRepository
         _progressRepository =
             ProgressRepository();
+
+    final StoryRepository
+        _storyRepository =
+            StoryRepository();
 
     /// 🔥 USUARIO ACTUAL
     final user =
@@ -133,6 +141,22 @@
       }
     }
 
+    Color getButtonColor(int index, int correctAnswer) {
+      if (!answered) {
+        return Colors.blueAccent;
+      }
+
+      if (index == correctAnswer) {
+        return Colors.green;
+      }
+
+      if (index == selectedAnswer) {
+        return Colors.red;
+      }
+
+      return Colors.grey;
+    }
+
     /// 🎊 REPRODUCIR NARRADOR
     Future<void> _readStory(String text) async {
       await _tts.speak(text);
@@ -220,90 +244,118 @@
     /// 🎉 FINALIZAR NIVEL
     Future<void> _finishLevel() async {
 
-      /// 🎉 NIVEL COMPLETADO
       attempts++;
-
-      /// ⭐ SISTEMA DE ESTRELLAS
-      int earnedStars = 1;
 
       final int totalQuestions =
           widget.level.questions.length;
 
-      /// CALCULAR ESTRELLAS BASADO EN RESPUESTAS
-      if (correctAnswers ==
-          totalQuestions) {
+      final int passThreshold =
+          (totalQuestions / 2).ceil();
 
-        earnedStars = 3; // PERFECTO
+      final bool success =
+          correctAnswers >= passThreshold;
 
-      } else if (correctAnswers >=
-          totalQuestions - 1) {
+      int earnedStars = 0;
 
-        earnedStars = 2; // CASI PERFECTO
+      if (success) {
+        if (correctAnswers == totalQuestions) {
+          earnedStars = 3;
+        } else if (correctAnswers >= totalQuestions - 1) {
+          earnedStars = 2;
+        } else {
+          earnedStars = 1;
+        }
 
-      } else {
+        earnedStars = earnedStars.clamp(0, 3);
 
-        earnedStars = 1; // PASÓ
-      }
-
-      /// 💾 GUARDAR PROGRESO
-      /// ⭐ GUARDADO LOCAL
-      GameProgress.saveStars(
-        widget.level.level - 1,
-        earnedStars,
-      );
-
-      /// 🔥 FIREBASE
-      if (user != null) {
-
-        final progress = ProgressModel(
-          userId: user!.email!,
-          level: widget.level.level,
-          stars: earnedStars,
-          game: "preguntas_rapidas",
+        GameProgress.saveStars(
+          'preguntas_rapidas',
+          widget.level.level - 1,
+          earnedStars,
         );
 
-        await _progressRepository
-            .saveProgress(progress);
+        if (user != null) {
+          final progress = ProgressModel(
+            userId: user!.email!,
+            level: widget.level.level,
+            stars: earnedStars,
+            game: "preguntas_rapidas",
+          );
+
+          await _progressRepository.saveProgress(progress);
+        }
       }
 
       if (!mounted) return;
 
-      /// 🎉 MOSTRAR RESULTADO
       showDialog(
-
         context: context,
-
         barrierDismissible: false,
-
-        builder: (_) =>
-            RapidResultDialog(
-
-          correctAnswers:
-              correctAnswers,
-
-          totalQuestions:
-              totalQuestions,
-
+        builder: (_) => RapidResultDialog(
+          success: success,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions,
           earnedStars: earnedStars,
-
           onRetry: () {
-
             Navigator.pop(context);
 
             setState(() {
-
               currentQuestion = 0;
               correctAnswers = 0;
               selectedAnswer = null;
               answered = false;
               attempts = 0;
               timeRemaining = 10;
+              gameStarted = false;
             });
-            _startQuestionTimer();
           },
+          onNextLevel: () async {
+            Navigator.pop(context);
 
+            final currentPosition = widget.availableLevels.indexOf(
+              widget.level.level,
+            );
+
+            if (currentPosition >= 0 &&
+                currentPosition + 1 <
+                    widget.availableLevels.length) {
+              final nextLevelNumber =
+                  widget.availableLevels[currentPosition + 1];
+
+              final tutorEmail =
+                  await TutorResolver.resolveTutorEmail();
+
+              final nextLevel =
+                  await _storyRepository.getEffectiveRapidLevel(
+                tutorEmail: tutorEmail,
+                level: nextLevelNumber,
+              );
+
+              if (!mounted || nextLevel == null) return;
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PreguntasRapidasLevel(
+                    level: nextLevel,
+                    availableLevels: widget.availableLevels,
+                  ),
+                ),
+              );
+            } else {
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.green,
+                  content: Text(
+                    '🎉 Has completado los niveles disponibles',
+                  ),
+                ),
+              );
+            }
+          },
           onBack: () {
-
             Navigator.pop(context);
             Navigator.pop(context);
           },
@@ -362,22 +414,11 @@
               ],
               if (!gameStarted) ...[
               /// 🖼️ IMAGEN
-              if (widget.level
-                  .imageUrl
-                  .isNotEmpty)
-
+              if (widget.level.imageUrl.isNotEmpty)
                 ClipRRect(
-
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                    15,
-                  ),
-
-                  child:
-                      Image.network(
-                    widget.level
-                        .imageUrl,
+                  borderRadius: BorderRadius.circular(15),
+                  child: StoryImage(
+                    imagePath: widget.level.imageUrl,
                   ),
                 ),
 
@@ -563,78 +604,36 @@
 
               /// 🔘 OPCIONES
         ...List.generate(
-
           4,
-
           (index) {
-
-            final isSelected =
-                selectedAnswer == index;
-
-            final bool isCorrect =
-                question!["correctAnswer"] == index;
-
-            Color buttonColor =
-                Colors.grey.shade200;
-
-            if (answered) {
-
-              if (isCorrect) {
-
-                buttonColor = Colors.green;
-
-              } else if (isSelected) {
-
-                buttonColor = Colors.red;
-              }
-            }
+            final correctAnswer =
+                question!["correctAnswer"] as int;
 
             return Padding(
-
-              padding: const EdgeInsets.only(
-                bottom: 10,
-              ),
-
+              padding: const EdgeInsets.only(bottom: 15),
               child: SizedBox(
-
                 width: double.infinity,
-
+                height: 65,
                 child: ElevatedButton(
-
-                  style:
-                      ElevatedButton.styleFrom(
-
-                    backgroundColor:
-                        buttonColor,
-
-                    padding:
-                        const EdgeInsets.all(
-                      15,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getButtonColor(
+                      index,
+                      correctAnswer,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-
-                  onPressed:
-                      answered
-                          ? null
-                          : () {
-
-                              answerQuestion(
-                                index,
-                              );
-                            },
-
+                  onPressed: answered
+                      ? null
+                      : () => answerQuestion(index),
                   child: Text(
-
                     question!["options"][index],
-
-                    style: TextStyle(
-
-                      color: answered
-                          ? Colors.white
-                          : Colors.black,
-
-                      fontWeight:
-                          FontWeight.bold,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
