@@ -95,7 +95,7 @@ IdeaLevel(
 
   options: [
 
-    "Los estudiantes trabajaron juntos para limpiar y cuidar su escuela.",
+    "Los alumnos trabajaron juntos para limpiar y cuidar su escuela.",
 
     "Ana encontró muchas botellas en el patio.",
 

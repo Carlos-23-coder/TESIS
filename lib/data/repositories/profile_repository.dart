@@ -12,7 +12,7 @@ class ProfileRepository {
 
     await _firestore
         .collection("users")
-        .doc(userId)
+        .doc(userId.toLowerCase())
         .set({
       "photoUrl": photoUrl,
     }, SetOptions(merge: true));
@@ -24,7 +24,7 @@ class ProfileRepository {
 
     final doc = await _firestore
         .collection("users")
-        .doc(userId)
+        .doc(userId.toLowerCase())
         .get();
 
     return doc.data();

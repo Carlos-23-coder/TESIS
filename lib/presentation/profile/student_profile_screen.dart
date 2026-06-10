@@ -74,6 +74,11 @@ class _StudentProfileScreenState
 
     if (user == null) return;
 
+    print("========== PERFIL ALUMNO ==========");
+    print("FirebaseAuth email: ${user!.email}");
+    print("FirebaseAuth uid: ${user!.uid}");
+
+
     final data =
         await _profileRepository
             .getProfile(
@@ -231,8 +236,10 @@ class _StudentProfileScreenState
 
     ScaffoldMessenger.of(this.context)
         .showSnackBar(
-
+   
       const SnackBar(
+        backgroundColor:
+            Colors.green,
         content: Text(
           "✅ Foto actualizada",
         ),

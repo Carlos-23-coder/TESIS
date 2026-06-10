@@ -22,7 +22,7 @@ class FirebaseService {
     required String password,
     required String pin,
   }) async {
-
+    email = email.trim().toLowerCase();
     /// 🔐 CREAR EN FIREBASE AUTH
     await _auth
         .createUserWithEmailAndPassword(
@@ -31,13 +31,16 @@ class FirebaseService {
     );
 
     /// 💾 GUARDAR DATOS EN FIRESTORE
+    final normalizedEmail =
+    email.trim().toLowerCase();
+
     await _db
         .collection('users')
-        .doc(email)
+        .doc(normalizedEmail)
         .set({
 
       'username': username,
-      'email': email,
+      'email': normalizedEmail,
       'role': role,
 
       /// ⚠️ SOLO PARA TU PROYECTO EDUCATIVO
@@ -66,6 +69,12 @@ class FirebaseService {
 
   }) async {
 
+      identifier = identifier.trim();
+
+      if (identifier.contains("@")) {
+        identifier = identifier.toLowerCase();
+      }
+
     try {
 
       /// 📱 INTENTA LOGIN OFFLINE (SQLITE)
@@ -77,9 +86,27 @@ class FirebaseService {
       );
 
       if (offlineResult != null) {
-        print(
-          "✅ Login OFFLINE exitoso",
-        );
+
+        print("✅ Login OFFLINE exitoso");
+
+        try {
+
+          await _auth.signInWithEmailAndPassword(
+            email: offlineResult["email"],
+            password: offlineResult["password"],
+          );
+
+          print(
+            "✅ FirebaseAuth sincronizado desde login principal",
+          );
+
+        } catch (e) {
+
+          print(
+            "❌ Error iniciando FirebaseAuth: $e",
+          );
+        }
+
         return offlineResult;
       }
 
@@ -138,6 +165,8 @@ class FirebaseService {
       }
 
       final userData = results.first;
+        print("========== LOGIN SQLITE ==========");
+        print(userData);
 
       final String savedPassword =
           userData["password"] ?? "";
@@ -147,17 +176,34 @@ class FirebaseService {
 
       /// 🔐 VALIDAR PASSWORD O PIN
       final bool validAccess =
+        passwordOrPin == savedPassword ||
+        passwordOrPin == savedPin;
 
-          passwordOrPin == savedPassword ||
+        if (!validAccess) {
+          return null;
+        }
 
-          passwordOrPin == savedPin;
+        /// 🔥 INICIAR SESIÓN EN FIREBASE AUTH
+        try {
 
-      if (!validAccess) {
-        return null;
-      }
+          await _auth.signInWithEmailAndPassword(
+            email: userData["email"],
+            password: savedPassword,
+          );
 
-      /// ✅ RETORNAR DATOS DEL USUARIO
-      return userData;
+          print(
+            "✅ FirebaseAuth sincronizado desde login offline",
+          );
+
+        } catch (e) {
+
+          print(
+            "⚠️ Error FirebaseAuth: $e",
+          );
+        }
+
+        /// ✅ RETORNAR DATOS DEL USUARIO
+        return userData;
 
     } catch (e) {
 
@@ -168,6 +214,7 @@ class FirebaseService {
       return null;
     }
   }
+
 
   /// 🌐 LOGIN CON FIREBASE (ONLINE)
   Future<Map<String, dynamic>?> _loginFirebase({
@@ -299,7 +346,7 @@ class FirebaseService {
 
         final userRef =
             _db.collection('users')
-                .doc(email);
+                .doc(email.toLowerCase());
 
         await userRef
             .collection('progress')

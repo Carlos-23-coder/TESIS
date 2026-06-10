@@ -16,14 +16,13 @@ class AlumnoHomeScreen extends StatelessWidget {
     super.key,
   });
 
-  void _logout(BuildContext context) {
+  void _logout(BuildContext context) async {
+
+    await FirebaseAuth.instance.signOut();
 
     Navigator.pushNamedAndRemoveUntil(
-
       context,
-
       '/',
-
       (route) => false,
     );
   }

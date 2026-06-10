@@ -18,7 +18,7 @@ class TutorRepository {
       final doc =
           await _firestore
               .collection("users")
-              .doc(email)
+              .doc(email.toLowerCase())
               .get();
 
       if (!doc.exists) {
@@ -47,7 +47,7 @@ class TutorRepository {
 
       await _firestore
           .collection("users")
-          .doc(email)
+          .doc(email.toLowerCase())
           .update({
 
         "photoUrl": photoPath,

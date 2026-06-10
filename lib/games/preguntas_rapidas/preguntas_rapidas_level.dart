@@ -5,14 +5,14 @@
   import 'package:firebase_auth/firebase_auth.dart';
   import 'package:flutter_tts/flutter_tts.dart';
 
-  import '../../core/widgets/story_image.dart';
-  import '../../core/game_engine/game_progress.dart';
-  import '../../data/models/progress_model.dart';
-  import '../../data/repositories/progress_repository.dart';
-  import '../../data/repositories/story_repository.dart';
-  import '../../data/services/tutor_resolver.dart';
+  import '../../../../../core/widgets/story_image.dart';
+  import '../../../../../core/game_engine/game_progress.dart';
+  import '../../../../../data/models/progress_model.dart';
+  import '../../../../../data/repositories/progress_repository.dart';
+  import '../../../../../data/repositories/story_repository.dart';
+  import '../../../../../data/services/tutor_resolver.dart';
 
-  import '../../../data/models/rapid_question_model.dart';
+  import '../../../../../../data/models/rapid_question_model.dart';
   import 'widgets/rapid_result_dialog.dart';
 
   class PreguntasRapidasLevel
@@ -33,9 +33,13 @@
             _PreguntasRapidasLevelState();
   }
 
+
   class _PreguntasRapidasLevelState
       extends State<
           PreguntasRapidasLevel> {
+            List<String> shuffledOptions = [];
+
+            int shuffledCorrectAnswer = 0;
 
     final AudioPlayer _audioPlayer =
         AudioPlayer();
@@ -91,6 +95,29 @@
       await _tts.setPitch(1.0);
     }
 
+    void _prepareQuestion() {
+
+      final question =
+          widget.level.questions[currentQuestion];
+
+      final List<String> options =
+          List<String>.from(
+        question["options"],
+      );
+
+      final String correctOption =
+          options[
+            question["correctAnswer"]
+          ];
+
+      options.shuffle();
+
+      shuffledCorrectAnswer =
+          options.indexOf(correctOption);
+
+      shuffledOptions = options;
+    }
+
     /// ⏱️ INICIAR TIMER
     void _startQuestionTimer() {
       _questionTimer?.cancel();
@@ -135,6 +162,9 @@
           selectedAnswer = null;
           answered = false;
         });
+
+        _prepareQuestion();
+
         _startQuestionTimer();
       } else {
         _finishLevel();
@@ -163,13 +193,13 @@
     }
 
     void startGame() {
+      _prepareQuestion();
+      setState(() {
+        gameStarted = true;
+      });
 
-    setState(() {
-      gameStarted = true;
-    });
-
-    _startQuestionTimer();
-  }
+      _startQuestionTimer();
+    }
 
     Future<void> playSuccess() async {
 
@@ -194,9 +224,7 @@
       _questionTimer?.cancel();
 
       final correct =
-          widget.level.questions[
-                  currentQuestion]
-              ["correctAnswer"];
+      shuffledCorrectAnswer;
 
       setState(() {
         selectedAnswer = answer;
@@ -233,6 +261,9 @@
           selectedAnswer = null;
           answered = false;
         });
+
+        _prepareQuestion();
+
         _startQuestionTimer();
 
       } else {
@@ -307,6 +338,8 @@
               attempts = 0;
               timeRemaining = 10;
               gameStarted = false;
+              shuffledOptions = [];
+              shuffledCorrectAnswer = 0;
             });
           },
           onNextLevel: () async {
@@ -402,7 +435,7 @@
                 LinearProgressIndicator(
 
                   value:
-                    currentQuestion /
+                    (currentQuestion + 1) /
                     widget.level.questions.length,
 
                   minHeight: 6,
@@ -602,12 +635,18 @@
             height: 20,
           ),
 
+
+            if (shuffledOptions.isEmpty)
+              const Center(
+              child: CircularProgressIndicator(),
+            ),
+            if (shuffledOptions.isNotEmpty)
               /// 🔘 OPCIONES
         ...List.generate(
-          4,
+          shuffledOptions.length,
           (index) {
             final correctAnswer =
-                question!["correctAnswer"] as int;
+              shuffledCorrectAnswer;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 15),
@@ -628,7 +667,7 @@
                       ? null
                       : () => answerQuestion(index),
                   child: Text(
-                    question!["options"][index],
+                    shuffledOptions[index],
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 18,

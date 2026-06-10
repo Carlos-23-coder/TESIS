@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../core/game_engine/game_progress.dart';
-import '../../data/models/story_override_model.dart';
-import '../../data/repositories/progress_repository.dart';
-import '../../data/repositories/story_repository.dart';
-import '../../data/services/tutor_resolver.dart';
+import '../../../core/game_engine/game_progress.dart';
+import '../../../data/models/story_override_model.dart';
+import '../../../data/repositories/progress_repository.dart';
+import '../../../data/repositories/story_repository.dart';
+import '../../../data/services/tutor_resolver.dart';
 
 import 'idea_principal_level.dart';
 

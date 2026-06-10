@@ -1,16 +1,16 @@
-import '../../core/game_engine/game_progress.dart';
+import '../../../../../core/game_engine/game_progress.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../core/widgets/story_image.dart';
-import '../../data/models/progress_model.dart';
-import '../../data/models/story_override_model.dart';
-import '../../data/repositories/progress_repository.dart';
-import '../../data/repositories/story_repository.dart';
-import '../../data/services/tutor_resolver.dart';
+import '../../../../../core/widgets/story_image.dart';
+import '../../../../../data/models/progress_model.dart';
+import '../../../../../data/models/story_override_model.dart';
+import '../../../../../data/repositories/progress_repository.dart';
+import '../../../../../data/repositories/story_repository.dart';
+import '../../../../../data/services/tutor_resolver.dart';
 
 import 'widgets/level_result_dialog.dart';
 

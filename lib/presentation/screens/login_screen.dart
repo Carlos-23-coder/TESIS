@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/services/firebase_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,11 +37,22 @@ class _LoginScreenState
 
   /// 🔐 LOGIN
   void _login() async {
+    await FirebaseAuth.instance.signOut();
+
+  print(
+    "Firebase después de signOut: "
+    "${FirebaseAuth.instance.currentUser?.email}",
+  );
 
     if (!_formKey.currentState!
         .validate()) {
       return;
     }
+
+      print(
+  "Firebase antes del login: "
+  "${FirebaseAuth.instance.currentUser?.email}",
+);
 
     final result =
         await _firebaseService.login(
@@ -54,6 +65,10 @@ class _LoginScreenState
 
       role: _role,
     );
+    print(
+  "Firebase después del login: "
+  "${FirebaseAuth.instance.currentUser?.email}",
+   );
 
     /// ❌ ERROR
     if (result == null) {

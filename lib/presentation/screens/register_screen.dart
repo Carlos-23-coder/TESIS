@@ -126,7 +126,7 @@ class _RegisterScreenState
     }
 
     final email =
-        _emailController.text.trim();
+        _emailController.text.trim().toLowerCase();
 
     final emailExists =
         await _userRepository
