@@ -11,82 +11,69 @@ import '../profile/student_profile_screen.dart';
 import 'student_rewards_screen.dart';
 
 class AlumnoHomeScreen extends StatelessWidget {
-
-  const AlumnoHomeScreen({
-    super.key,
-  });
+  const AlumnoHomeScreen({super.key});
 
   void _logout(BuildContext context) async {
-
     await FirebaseAuth.instance.signOut();
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/',
-      (route) => false,
-    );
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final headerColor = isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent;
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xFFEAF6FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
 
       appBar: AppBar(
-
         automaticallyImplyLeading: false,
 
         elevation: 0,
 
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: headerColor,
 
-        title: const Text(
-          "LectoPlay",
-        ),
+        title: const Text("LectoPlay"),
 
         actions: [
+          IconButton(
+            tooltip: 'Accesibilidad',
+
+            icon: const Icon(Icons.accessibility_new),
+
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
 
           /// 🎁 RECOMPENSAS
           IconButton(
-
-            icon: const Icon(
-              Icons.card_giftcard,
-            ),
+            icon: const Icon(Icons.card_giftcard),
 
             onPressed: () async {
+              final progressRepo = ProgressRepository();
 
-              final progressRepo =
-                  ProgressRepository();
+              final User? currentUser = FirebaseAuth.instance.currentUser;
 
-              final User? currentUser =
-                FirebaseAuth.instance.currentUser;
-
-              final String userId =
-                currentUser?.email ?? "";
+              final String userId = currentUser?.email ?? "";
 
               if (userId.isEmpty) {
-              return;
+                return;
               }
 
-              final stars =
-                  await progressRepo
-                      .getTotalStars(
-                userId,
-              );
+              final stars = await progressRepo.getTotalStars(userId);
+
+              if (!context.mounted) return;
 
               Navigator.push(
-
                 context,
 
                 MaterialPageRoute(
-
-                  builder: (_) =>
-                      StudentRewardsScreen(
-                    userStars: stars,
-                  ),
+                  builder: (_) => StudentRewardsScreen(userStars: stars),
                 ),
               );
             },
@@ -94,132 +81,84 @@ class AlumnoHomeScreen extends StatelessWidget {
 
           /// 👤 PERFIL
           GestureDetector(
-
             onTap: () {
-
               Navigator.push(
-
                 context,
 
-                MaterialPageRoute(
-
-                  builder: (_) =>
-                      const StudentProfileScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const StudentProfileScreen()),
               );
             },
 
             child: const Padding(
-
-              padding:
-                  EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 10),
 
               child: CircleAvatar(
-
                 radius: 18,
 
-                backgroundColor:
-                    Colors.white,
+                backgroundColor: Colors.white,
 
-                child: Icon(
-                  Icons.person,
-                  color: Colors.blue,
-                ),
+                child: Icon(Icons.person, color: Colors.blue),
               ),
             ),
           ),
 
           /// 🚪 LOGOUT
           IconButton(
+            icon: const Icon(Icons.logout),
 
-            icon: const Icon(
-              Icons.logout,
-            ),
-
-            onPressed: () =>
-                _logout(context),
+            onPressed: () => _logout(context),
           ),
         ],
       ),
 
       body: Column(
-
         children: [
-
           /// 🔵 HEADER
           Container(
-
             width: double.infinity,
 
-            padding:
-                const EdgeInsets.all(
-              25,
-            ),
+            padding: const EdgeInsets.all(25),
 
-            decoration:
-                const BoxDecoration(
+            decoration: BoxDecoration(
+              color: headerColor,
 
-              color: Colors.blueAccent,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
 
-              borderRadius:
-                  BorderRadius.only(
-
-                bottomLeft:
-                    Radius.circular(30),
-
-                bottomRight:
-                    Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
             ),
 
             child: const Column(
-
               children: [
-
                 Text(
-
                   "¡Aprendamos jugando!",
 
                   style: TextStyle(
-
                     color: Colors.white,
 
                     fontSize: 26,
 
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                SizedBox(
-                  height: 8,
-                ),
+                SizedBox(height: 8),
 
                 Text(
-
                   "Completa niveles y gana estrellas ⭐",
 
-                  style: TextStyle(
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(color: Colors.white70),
                 ),
               ],
             ),
           ),
 
           Expanded(
-
             child: Padding(
-
-              padding:
-                  const EdgeInsets.all(
-                20,
-              ),
+              padding: const EdgeInsets.all(20),
 
               child: GridView.count(
-
                 crossAxisCount: 2,
 
                 crossAxisSpacing: 15,
@@ -229,26 +168,11 @@ class AlumnoHomeScreen extends StatelessWidget {
                 childAspectRatio: 1.1,
 
                 children: [
-
                   /// IDEA PRINCIPAL
-                  _gameCard(
-
-                    context,
-
-                    Icons.lightbulb,
-
-                    "Idea\nPrincipal",
-                  ),
+                  _gameCard(context, Icons.lightbulb, "Idea\nPrincipal"),
 
                   /// PREGUNTAS RÁPIDAS
-                  _gameCard(
-
-                    context,
-
-                    Icons.timer,
-
-                    "Preguntas\nRápidas",
-                  ),
+                  _gameCard(context, Icons.timer, "Preguntas\nRápidas"),
                 ],
               ),
             ),
@@ -259,77 +183,40 @@ class AlumnoHomeScreen extends StatelessWidget {
   }
 
   /// 🎮 CARD JUEGO
-  Widget _gameCard(
-
-    BuildContext context,
-
-    IconData icon,
-
-    String title,
-
-  ) {
+  Widget _gameCard(BuildContext context, IconData icon, String title) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
-
       onTap: () {
-
-        if (title ==
-            "Idea\nPrincipal") {
-
+        if (title == "Idea\nPrincipal") {
           Navigator.push(
-
             context,
 
-            MaterialPageRoute(
-
-              builder: (_) =>
-                  const IdeaPrincipalMap(),
-            ),
+            MaterialPageRoute(builder: (_) => const IdeaPrincipalMap()),
           );
-
-        } else if (title ==
-            "Preguntas\nRápidas") {
-
+        } else if (title == "Preguntas\nRápidas") {
           Navigator.push(
-
             context,
 
-            MaterialPageRoute(
-
-              builder: (_) =>
-                  const PreguntasRapidasMap(),
-            ),
+            MaterialPageRoute(builder: (_) => const PreguntasRapidasMap()),
           );
-
         } else {
-
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
-
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-
-              content: Text(
-
-                "Este juego estará disponible próximamente 😊",
-              ),
+              content: Text("Este juego estará disponible próximamente 😊"),
             ),
           );
         }
       },
 
       child: Container(
-
         decoration: BoxDecoration(
+          color: theme.cardColor,
 
-          color: Colors.white,
-
-          borderRadius:
-              BorderRadius.circular(
-            22,
-          ),
+          borderRadius: BorderRadius.circular(22),
 
           boxShadow: const [
-
             BoxShadow(
               color: Colors.black12,
               blurRadius: 6,
@@ -339,58 +226,34 @@ class AlumnoHomeScreen extends StatelessWidget {
         ),
 
         child: Column(
-
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
-
             Container(
-
-              padding:
-                  const EdgeInsets.all(
-                15,
-              ),
+              padding: const EdgeInsets.all(15),
 
               decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.blueAccent.withValues(alpha: 0.18)
+                    : Colors.blue.shade50,
 
-                color:
-                    Colors.blue.shade50,
-
-                borderRadius:
-                    BorderRadius.circular(
-                  18,
-                ),
+                borderRadius: BorderRadius.circular(18),
               ),
 
-              child: Icon(
-
-                icon,
-
-                size: 40,
-
-                color:
-                    Colors.blueAccent,
-              ),
+              child: Icon(icon, size: 40, color: Colors.blueAccent),
             ),
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
             Text(
-
               title,
 
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
 
-              style: const TextStyle(
-
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontSize: 16,
 
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

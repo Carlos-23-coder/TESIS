@@ -1,93 +1,75 @@
 import 'package:flutter/material.dart';
 
+import 'auth_design.dart';
+
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF89CFF0),
-              Color(0xFFA1E3D8),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    return AuthScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AuthLogoHeader(
+            title: 'LectoPlay',
+            subtitle: 'Lectura, retos y recompensas en un espacio tranquilo.',
+            icon: Icons.auto_stories,
           ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(30),
+          const SizedBox(height: 28),
+          AuthPanel(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
-                Image.asset(
-                  "assets/images/logo_uleam.png",
-                  height: 120,
-                ),
-
-                const SizedBox(height: 20),
-
                 const Text(
-                  "LectoPlay",
+                  'Elige cómo quieres empezar',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AuthPalette.ink,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
                   ),
                 ),
-
-                const SizedBox(height: 50),
-
+                const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
+                  child: ElevatedButton.icon(
+                    style: primaryAuthButtonStyle(),
                     onPressed: () {
                       Navigator.pushNamed(context, '/login');
                     },
-                    child: const Text(
-                      "Iniciar Sesión",
-                      style: TextStyle(fontSize: 20),
-                    ),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Iniciar sesión'),
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AuthPalette.blue,
+                      side: const BorderSide(color: AuthPalette.blue, width: 2),
+                      minimumSize: const Size.fromHeight(56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
                       ),
                     ),
                     onPressed: () {
                       Navigator.pushNamed(context, '/register');
                     },
-                    child: const Text(
-                      "Crear Cuenta",
-                      style: TextStyle(fontSize: 20),
-                    ),
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Crear cuenta'),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

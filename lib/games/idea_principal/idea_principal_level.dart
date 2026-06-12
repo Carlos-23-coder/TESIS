@@ -25,19 +25,15 @@ class IdeaPrincipalLevel extends StatefulWidget {
   });
 
   @override
-  State<IdeaPrincipalLevel> createState() =>
-      _IdeaPrincipalLevelState();
+  State<IdeaPrincipalLevel> createState() => _IdeaPrincipalLevelState();
 }
 
-class _IdeaPrincipalLevelState
-    extends State<IdeaPrincipalLevel> {
+class _IdeaPrincipalLevelState extends State<IdeaPrincipalLevel> {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  final ProgressRepository _progressRepository =
-      ProgressRepository();
+  final ProgressRepository _progressRepository = ProgressRepository();
 
-  final StoryRepository _storyRepository =
-      StoryRepository();
+  final StoryRepository _storyRepository = StoryRepository();
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -64,15 +60,11 @@ class _IdeaPrincipalLevelState
   }
 
   Future<void> playSuccess() async {
-    await _audioPlayer.play(
-      AssetSource('sounds/success.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('sounds/success.mp3'));
   }
 
   Future<void> playError() async {
-    await _audioPlayer.play(
-      AssetSource('sounds/error.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('sounds/error.mp3'));
   }
 
   void checkAnswer(int index) async {
@@ -100,11 +92,7 @@ class _IdeaPrincipalLevelState
     if (isCorrect) {
       final cappedStars = earnedStars.clamp(0, 3);
 
-      GameProgress.saveStars(
-        'idea_principal',
-        levelIndex,
-        cappedStars,
-      );
+      GameProgress.saveStars('idea_principal', levelIndex, cappedStars);
 
       if (user != null) {
         final progress = ProgressModel(
@@ -124,9 +112,7 @@ class _IdeaPrincipalLevelState
       await playError();
     }
 
-    await Future.delayed(
-      const Duration(milliseconds: 700),
-    );
+    await Future.delayed(const Duration(milliseconds: 700));
 
     if (!mounted) return;
 
@@ -146,19 +132,17 @@ class _IdeaPrincipalLevelState
         onNextLevel: () async {
           Navigator.pop(context);
 
-          final currentPosition =
-              widget.availableLevels.indexOf(widget.level.level);
+          final currentPosition = widget.availableLevels.indexOf(
+            widget.level.level,
+          );
 
           if (currentPosition >= 0 &&
               currentPosition + 1 < widget.availableLevels.length) {
-            final nextLevelNumber =
-                widget.availableLevels[currentPosition + 1];
+            final nextLevelNumber = widget.availableLevels[currentPosition + 1];
 
-            final tutorEmail =
-                await TutorResolver.resolveTutorEmail();
+            final tutorEmail = await TutorResolver.resolveTutorEmail();
 
-            final nextLevel =
-                await _storyRepository.getEffectiveIdeaLevel(
+            final nextLevel = await _storyRepository.getEffectiveIdeaLevel(
               tutorEmail: tutorEmail,
               level: nextLevelNumber,
             );
@@ -180,9 +164,7 @@ class _IdeaPrincipalLevelState
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 backgroundColor: Colors.green,
-                content: Text(
-                  '🎉 Has completado los niveles disponibles',
-                ),
+                content: Text('🎉 Has completado los niveles disponibles'),
               ),
             );
           }
@@ -214,13 +196,11 @@ class _IdeaPrincipalLevelState
   @override
   Widget build(BuildContext context) {
     final level = widget.level;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
-      appBar: AppBar(
-        title: Text('Nivel ${level.level}'),
-        centerTitle: true,
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(title: Text('Nivel ${level.level}'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -228,41 +208,29 @@ class _IdeaPrincipalLevelState
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: StoryImage(
-                imagePath: level.image,
-                height: 220,
-              ),
+              child: StoryImage(imagePath: level.image, height: 220),
             ),
             const SizedBox(height: 20),
             const Text(
               'Lee la siguiente historia',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 level.story,
-                style: const TextStyle(
-                  fontSize: 24,
-                  height: 1.6,
-                ),
+                style: const TextStyle(fontSize: 24, height: 1.6),
               ),
             ),
             const SizedBox(height: 30),
             Text(
               level.question,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             for (int i = 0; i < shuffledOptions.length; i++)
@@ -273,10 +241,7 @@ class _IdeaPrincipalLevelState
                   height: 65,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: getButtonColor(
-                        i,
-                        shuffledCorrectAnswer,
-                      ),
+                      backgroundColor: getButtonColor(i, shuffledCorrectAnswer),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
@@ -285,10 +250,7 @@ class _IdeaPrincipalLevelState
                     child: Text(
                       shuffledOptions[i],
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
                 ),

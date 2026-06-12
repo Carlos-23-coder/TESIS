@@ -9,14 +9,11 @@ class StoriesAdminScreen extends StatefulWidget {
   const StoriesAdminScreen({super.key});
 
   @override
-  State<StoriesAdminScreen> createState() =>
-      _StoriesAdminScreenState();
+  State<StoriesAdminScreen> createState() => _StoriesAdminScreenState();
 }
 
-class _StoriesAdminScreenState
-    extends State<StoriesAdminScreen> {
-  final StoryRepository _repository =
-      StoryRepository();
+class _StoriesAdminScreenState extends State<StoriesAdminScreen> {
+  final StoryRepository _repository = StoryRepository();
 
   List<StoryLevelSummary> ideaLevels = [];
   List<StoryLevelSummary> rapidLevels = [];
@@ -64,10 +61,7 @@ class _StoriesAdminScreenState
       return 1;
     }
 
-    return levels.map((item) => item.level).reduce(
-              (a, b) => a > b ? a : b,
-            ) +
-        1;
+    return levels.map((item) => item.level).reduce((a, b) => a > b ? a : b) + 1;
   }
 
   Future<void> openEditor({
@@ -101,17 +95,16 @@ class _StoriesAdminScreenState
     required String game,
     required List<StoryLevelSummary> levels,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -183,14 +176,12 @@ class _StoriesAdminScreenState
                     item.isNewLevel
                         ? 'Nivel nuevo'
                         : item.isCustomized
-                            ? 'Personalizado'
-                            : 'Contenido predeterminado',
+                        ? 'Personalizado'
+                        : 'Contenido predeterminado',
+                    style: TextStyle(color: isDark ? Colors.white70 : null),
                   ),
                   trailing: const Icon(Icons.edit),
-                  onTap: () => openEditor(
-                    game: game,
-                    level: item.level,
-                  ),
+                  onTap: () => openEditor(game: game, level: item.level),
                 );
               },
             ),
@@ -201,12 +192,11 @@ class _StoriesAdminScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
-      appBar: AppBar(
-        title: const Text('Historias'),
-        centerTitle: true,
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(title: const Text('Historias'), centerTitle: true),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -231,11 +221,7 @@ class _StoriesAdminScreenState
                       ),
                       child: const Column(
                         children: [
-                          Icon(
-                            Icons.menu_book,
-                            color: Colors.white,
-                            size: 48,
-                          ),
+                          Icon(Icons.menu_book, color: Colors.white, size: 48),
                           SizedBox(height: 12),
                           Text(
                             'Personaliza historias',

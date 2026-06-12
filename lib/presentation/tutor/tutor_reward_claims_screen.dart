@@ -9,21 +9,20 @@ class TutorRewardClaimsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tutorEmail =
-        FirebaseAuth.instance.currentUser?.email;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final tutorEmail = FirebaseAuth.instance.currentUser?.email;
 
     if (tutorEmail == null) {
       return const Scaffold(
-        body: Center(
-          child: Text('No se pudo identificar al tutor.'),
-        ),
+        body: Center(child: Text('No se pudo identificar al tutor.')),
       );
     }
 
     final repository = RewardClaimRepository();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Solicitudes de recompensas'),
         centerTitle: true,
@@ -31,11 +30,8 @@ class TutorRewardClaimsScreen extends StatelessWidget {
       body: StreamBuilder<List<RewardClaimModel>>(
         stream: repository.watchPendingClaimsForTutor(tutorEmail),
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           final claims = snapshot.data ?? [];
@@ -63,7 +59,7 @@ class TutorRewardClaimsScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
                     BoxShadow(
@@ -104,7 +100,7 @@ class TutorRewardClaimsScreen extends StatelessWidget {
                       'Correo: ${claim.studentEmail}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade700,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -112,7 +108,9 @@ class TutorRewardClaimsScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: isDark
+                            ? Colors.orange.withValues(alpha: 0.16)
+                            : Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(

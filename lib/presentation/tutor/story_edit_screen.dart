@@ -22,13 +22,11 @@ class StoryEditScreen extends StatefulWidget {
   });
 
   @override
-  State<StoryEditScreen> createState() =>
-      _StoryEditScreenState();
+  State<StoryEditScreen> createState() => _StoryEditScreenState();
 }
 
 class _StoryEditScreenState extends State<StoryEditScreen> {
-  final StoryRepository _repository =
-      StoryRepository();
+  final StoryRepository _repository = StoryRepository();
 
   final ImagePicker _picker = ImagePicker();
 
@@ -36,20 +34,20 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   final storyController = TextEditingController();
   final questionController = TextEditingController();
 
-  final List<TextEditingController> optionControllers =
-      List.generate(3, (_) => TextEditingController());
-
-  final List<TextEditingController> questionControllers =
-      List.generate(5, (_) => TextEditingController());
-
-  final List<List<TextEditingController>> rapidOptionControllers =
-      List.generate(
-    5,
-    (_) => List.generate(4, (_) => TextEditingController()),
+  final List<TextEditingController> optionControllers = List.generate(
+    3,
+    (_) => TextEditingController(),
   );
 
-  final List<int> rapidCorrectAnswers =
-      List.generate(5, (_) => 0);
+  final List<TextEditingController> questionControllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
+
+  final List<List<TextEditingController>> rapidOptionControllers =
+      List.generate(5, (_) => List.generate(4, (_) => TextEditingController()));
+
+  final List<int> rapidCorrectAnswers = List.generate(5, (_) => 0);
 
   File? selectedImage;
   String currentImagePath = '';
@@ -57,8 +55,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   bool loading = true;
   bool hasDefault = false;
 
-  bool get isIdeaPrincipal =>
-      widget.game == StoryGameType.ideaPrincipal;
+  bool get isIdeaPrincipal => widget.game == StoryGameType.ideaPrincipal;
 
   String get gameTitle =>
       isIdeaPrincipal ? 'Idea Principal' : 'Preguntas Rápidas';
@@ -76,10 +73,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
       level: widget.level,
     );
 
-    hasDefault = _repository.hasDefaultLevel(
-      widget.game,
-      widget.level,
-    );
+    hasDefault = _repository.hasDefaultLevel(widget.game, widget.level);
 
     if (content != null) {
       titleController.text = content.title;
@@ -100,8 +94,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
         correctAnswer = content.correctAnswer;
       } else {
         for (int i = 0; i < content.questions.length && i < 5; i++) {
-          questionControllers[i].text =
-              content.questions[i]['question'] ?? '';
+          questionControllers[i].text = content.questions[i]['question'] ?? '';
 
           final options = List<String>.from(
             content.questions[i]['options'] ?? [],
@@ -113,8 +106,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
             }
           }
 
-          rapidCorrectAnswers[i] =
-              content.questions[i]['correctAnswer'] ?? 0;
+          rapidCorrectAnswers[i] = content.questions[i]['correctAnswer'] ?? 0;
         }
       }
     } else if (widget.isNewLevel) {
@@ -127,9 +119,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   }
 
   Future<void> pickImage() async {
-    final image = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    final image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) return;
 
@@ -183,8 +173,8 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
       level: widget.level,
       title: isIdeaPrincipal
           ? (titleController.text.trim().isEmpty
-              ? 'Nivel ${widget.level}'
-              : titleController.text.trim())
+                ? 'Nivel ${widget.level}'
+                : titleController.text.trim())
           : titleController.text.trim(),
       story: storyController.text.trim(),
       imagePath: currentImagePath,
@@ -194,18 +184,13 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
           .toList(),
       correctAnswer: correctAnswer,
       questions: _buildRapidQuestions(),
-      isNewLevel: widget.isNewLevel ||
-          !_repository.hasDefaultLevel(
-            widget.game,
-            widget.level,
-          ),
+      isNewLevel:
+          widget.isNewLevel ||
+          !_repository.hasDefaultLevel(widget.game, widget.level),
       date: DateTime.now().toIso8601String(),
     );
 
-    await _repository.saveOverride(
-      override: override,
-      newImage: selectedImage,
-    );
+    await _repository.saveOverride(override: override, newImage: selectedImage);
 
     if (!mounted) return;
 
@@ -284,9 +269,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Eliminar nivel'),
-        content: const Text(
-          '¿Seguro que quieres eliminar este nivel?',
-        ),
+        content: const Text('¿Seguro que quieres eliminar este nivel?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -314,9 +297,9 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _textField({
@@ -324,16 +307,17 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
     required String label,
     int maxLines = 1,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return TextField(
       controller: controller,
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -341,21 +325,11 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   Widget _buildIdeaPrincipalFields() {
     return Column(
       children: [
-        _textField(
-          controller: titleController,
-          label: 'Título (opcional)',
-        ),
+        _textField(controller: titleController, label: 'Título (opcional)'),
         const SizedBox(height: 16),
-        _textField(
-          controller: storyController,
-          label: 'Historia',
-          maxLines: 8,
-        ),
+        _textField(controller: storyController, label: 'Historia', maxLines: 8),
         const SizedBox(height: 16),
-        _textField(
-          controller: questionController,
-          label: 'Pregunta principal',
-        ),
+        _textField(controller: questionController, label: 'Pregunta principal'),
         const SizedBox(height: 16),
         for (int i = 0; i < optionControllers.length; i++) ...[
           _textField(
@@ -369,10 +343,10 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
           decoration: InputDecoration(
             labelText: 'Respuesta correcta',
             filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            fillColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1F2937)
+                : Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
           ),
           items: List.generate(
             3,
@@ -392,11 +366,14 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
   }
 
   Widget _buildRapidQuestion(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.purple.shade100),
       ),
@@ -405,16 +382,10 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
         children: [
           Text(
             'Pregunta ${index + 1}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
-          _textField(
-            controller: questionControllers[index],
-            label: 'Pregunta',
-          ),
+          _textField(controller: questionControllers[index], label: 'Pregunta'),
           const SizedBox(height: 12),
           for (int i = 0; i < 4; i++) ...[
             _textField(
@@ -428,7 +399,9 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
             decoration: InputDecoration(
               labelText: 'Respuesta correcta',
               filled: true,
-              fillColor: Colors.grey.shade100,
+              fillColor: isDark
+                  ? const Color(0xFF1F2937)
+                  : Colors.grey.shade100,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -453,11 +426,11 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
-      appBar: AppBar(
-        title: Text('$gameTitle · Nivel ${widget.level}'),
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(title: Text('$gameTitle · Nivel ${widget.level}')),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -465,10 +438,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
               child: Column(
                 children: [
                   if (!isIdeaPrincipal)
-                    _textField(
-                      controller: titleController,
-                      label: 'Título',
-                    ),
+                    _textField(controller: titleController, label: 'Título'),
                   if (!isIdeaPrincipal) const SizedBox(height: 16),
                   if (isIdeaPrincipal) _buildIdeaPrincipalFields(),
                   if (!isIdeaPrincipal) ...[
@@ -478,8 +448,7 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
                       maxLines: 8,
                     ),
                     const SizedBox(height: 16),
-                    for (int i = 0; i < 5; i++)
-                      _buildRapidQuestion(i),
+                    for (int i = 0; i < 5; i++) _buildRapidQuestion(i),
                   ],
                   const SizedBox(height: 16),
                   ElevatedButton.icon(

@@ -1,503 +1,201 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../../data/services/firebase_service.dart';
+import 'auth_design.dart';
 
 class LoginScreen extends StatefulWidget {
-
-  const LoginScreen({
-    super.key,
-  });
+  const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() =>
-      _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState
-    extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _userController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final FirebaseService _firebaseService = FirebaseService();
 
-  final _formKey =
-      GlobalKey<FormState>();
-
-  /// 👤 CORREO O USUARIO
-  final _userController =
-      TextEditingController();
-
-  /// 🔒 CONTRASEÑA O PIN
-  final _passwordController =
-      TextEditingController();
-
-  final FirebaseService
-      _firebaseService =
-          FirebaseService();
-
-  String _role = "Alumno";
-
+  String _role = 'Alumno';
   bool _obscurePassword = true;
 
-  /// 🔐 LOGIN
   void _login() async {
     await FirebaseAuth.instance.signOut();
 
-  print(
-    "Firebase después de signOut: "
-    "${FirebaseAuth.instance.currentUser?.email}",
-  );
+    debugPrint(
+      'Firebase despues de signOut: '
+      '${FirebaseAuth.instance.currentUser?.email}',
+    );
 
-    if (!_formKey.currentState!
-        .validate()) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-      print(
-  "Firebase antes del login: "
-  "${FirebaseAuth.instance.currentUser?.email}",
-);
+    debugPrint(
+      'Firebase antes del login: '
+      '${FirebaseAuth.instance.currentUser?.email}',
+    );
 
-    final result =
-        await _firebaseService.login(
-
-      identifier:
-          _userController.text.trim(),
-
-      passwordOrPin:
-          _passwordController.text.trim(),
-
+    final result = await _firebaseService.login(
+      identifier: _userController.text.trim(),
+      passwordOrPin: _passwordController.text.trim(),
       role: _role,
     );
-    print(
-  "Firebase después del login: "
-  "${FirebaseAuth.instance.currentUser?.email}",
-   );
 
-    /// ❌ ERROR
+    debugPrint(
+      'Firebase despues del login: '
+      '${FirebaseAuth.instance.currentUser?.email}',
+    );
+
+    if (!mounted) return;
+
     if (result == null) {
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-
-          backgroundColor:
-              Colors.red,
-
-          content: Text(
-            "Datos incorrectos",
-          ),
+          backgroundColor: Colors.red,
+          content: Text('Datos incorrectos'),
         ),
       );
-
       return;
     }
 
-    /// ✅ LOGIN EXITOSO
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-
-        backgroundColor:
-            Colors.green,
-
+        backgroundColor: Colors.green,
         content: Row(
-
           children: [
-
-            Icon(
-              Icons.check_circle,
-              color: Colors.white,
-            ),
-
+            Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 10),
-
-            Text("¡Bienvenido!"),
+            Text('¡Bienvenido!'),
           ],
         ),
       ),
     );
 
-    Future.delayed(
-      const Duration(seconds: 1),
-      () {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
 
-        if (_role == "Tutor") {
-
-          Navigator
-              .pushReplacementNamed(
-            context,
-            '/tutor',
-          );
-
-        } else {
-
-          Navigator
-              .pushReplacementNamed(
-            context,
-            '/alumno',
-          );
-        }
-      },
-    );
+      if (_role == 'Tutor') {
+        Navigator.pushReplacementNamed(context, '/tutor');
+      } else {
+        Navigator.pushReplacementNamed(context, '/alumno');
+      }
+    });
   }
 
-  InputDecoration _inputDecoration(
-    String label, {
-    Widget? suffix,
-  }) {
+  @override
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      child: AuthPanel(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AuthLogoHeader(
+                title: 'Iniciar sesión',
+                subtitle: 'Entra con calma y continúa tu aventura lectora.',
+                icon: Icons.login,
+              ),
+              const SizedBox(height: 26),
+              TextFormField(
+                controller: _userController,
+                style: const TextStyle(fontSize: 17),
+                decoration: authInputDecoration(
+                  'Correo o usuario',
+                  icon: Icons.person_outline,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ingrese usuario o correo';
+                  }
 
-    return InputDecoration(
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _role,
+                decoration: authInputDecoration(
+                  'Tipo de cuenta',
+                  icon: Icons.school_outlined,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Tutor', child: Text('Tutor')),
+                  DropdownMenuItem(value: 'Alumno', child: Text('Alumno')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _role = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                style: const TextStyle(fontSize: 17),
+                decoration: authInputDecoration(
+                  'Contraseña o PIN',
+                  icon: Icons.lock_outline,
+                  suffix: IconButton(
+                    tooltip: _obscurePassword ? 'Mostrar' : 'Ocultar',
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ingrese contraseña o PIN';
+                  }
 
-      labelText: label,
-
-      labelStyle:
-          const TextStyle(
-        fontSize: 16,
-      ),
-
-      filled: true,
-
-      fillColor: Colors.white,
-
-      contentPadding:
-          const EdgeInsets.symmetric(
-        vertical: 18,
-        horizontal: 15,
-      ),
-
-      border: OutlineInputBorder(
-
-        borderRadius:
-            BorderRadius.circular(
-          18,
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: primaryAuthButtonStyle(),
+                  onPressed: _login,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Ingresar'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/register');
+                },
+                child: const Text(
+                  '¿No tienes cuenta? Regístrate',
+                  style: TextStyle(
+                    color: AuthPalette.blue,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-
-      suffixIcon: suffix,
     );
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-
-    return Scaffold(
-
-      body: Container(
-
-        decoration:
-            const BoxDecoration(
-
-          gradient: LinearGradient(
-
-            colors: [
-
-              Color(0xFF6DD5FA),
-              Color(0xFFBFF098),
-            ],
-
-            begin:
-                Alignment.topCenter,
-
-            end:
-                Alignment.bottomCenter,
-          ),
-        ),
-
-        child: Center(
-
-          child: SingleChildScrollView(
-
-            padding:
-                const EdgeInsets.all(
-              25,
-            ),
-
-            child: Card(
-
-              shape:
-                  RoundedRectangleBorder(
-
-                borderRadius:
-                    BorderRadius.circular(
-                  30,
-                ),
-              ),
-
-              elevation: 12,
-
-              child: Padding(
-
-                padding:
-                    const EdgeInsets.all(
-                  30,
-                ),
-
-                child: Form(
-
-                  key: _formKey,
-
-                  child: Column(
-
-                    children: [
-
-                      Image.asset(
-                        'assets/images/logo_uleam.png',
-                        height: 90,
-                      ),
- 
-
-                      const SizedBox(
-                        height: 15,
-                      ),
-
-                      const Text(
-
-                        "Iniciar Sesión",
-
-                        style: TextStyle(
-
-                          fontSize: 26,
-
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 30,
-                      ),
-
-                      /// 👤 USUARIO O CORREO
-                      TextFormField(
-
-                        controller:
-                            _userController,
-
-                        style:
-                            const TextStyle(
-                          fontSize: 18,
-                        ),
-
-                        decoration:
-                            _inputDecoration(
-                          "Correo o Usuario",
-                        ),
-
-                        validator:
-                            (value) {
-
-                          if (value ==
-                                  null ||
-                              value
-                                  .isEmpty) {
-
-                            return
-                                "Ingrese usuario o correo";
-                          }
-
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(
-                        height: 20,
-                      ),
-
-                      /// 👤 TIPO
-                      DropdownButtonFormField<
-                          String>(
-
-                        value: _role,
-
-                        decoration:
-                            _inputDecoration(
-                          "Tipo de cuenta",
-                        ),
-
-                        items: const [
-
-                          DropdownMenuItem(
-
-                            value: "Tutor",
-
-                            child:
-                                Text(
-                              "Tutor",
-                            ),
-                          ),
-
-                          DropdownMenuItem(
-
-                            value:
-                                "Alumno",
-
-                            child:
-                                Text(
-                              "Alumno",
-                            ),
-                          ),
-                        ],
-
-                        onChanged: (value) {
-
-                          setState(() {
-
-                            _role = value!;
-                          });
-                        },
-                      ),
-
-                      const SizedBox(
-                        height: 20,
-                      ),
-
-                      /// 🔒 PASSWORD O PIN
-                      TextFormField(
-
-                        controller:
-                            _passwordController,
-
-                        obscureText:
-                            _obscurePassword,
-
-                        style:
-                            const TextStyle(
-                          fontSize: 18,
-                        ),
-
-                        decoration:
-                            _inputDecoration(
-
-                          "Contraseña o PIN",
-
-                          suffix:
-                              IconButton(
-
-                            icon: Icon(
-
-                              _obscurePassword
-                                  ? Icons
-                                      .visibility_off
-                                  : Icons
-                                      .visibility,
-                            ),
-
-                            onPressed: () {
-
-                              setState(() {
-
-                                _obscurePassword =
-                                    !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
-
-                        validator:
-                            (value) {
-
-                          if (value ==
-                                  null ||
-                              value
-                                  .isEmpty) {
-
-                            return
-                                "Ingrese contraseña o PIN";
-                          }
-
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(
-                        height: 30,
-                      ),
-
-                      /// 🔥 BOTÓN LOGIN
-                      SizedBox(
-
-                        width:
-                            double.infinity,
-
-                        height: 55,
-
-                        child:
-                            ElevatedButton(
-
-                          style:
-                              ElevatedButton.styleFrom(
-
-                            backgroundColor:
-                                Colors
-                                    .blueAccent,
-
-                            shape:
-                                RoundedRectangleBorder(
-
-                              borderRadius:
-                                  BorderRadius.circular(
-                                18,
-                              ),
-                            ),
-                          ),
-
-                          onPressed:
-                              _login,
-
-                          child:
-                              const Text(
-
-                            "Ingresar",
-
-                            style:
-                                TextStyle(
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 20,
-                      ),
-
-                      /// 🔗 REGISTRO
-                      GestureDetector(
-
-                        onTap: () {
-
-                          Navigator
-                              .pushReplacementNamed(
-                            context,
-                            '/register',
-                          );
-                        },
-
-                        child: const Text(
-
-                          "¿No tienes cuenta? Regístrate",
-
-                          style: TextStyle(
-
-                            color:
-                                Colors.blue,
-
-                            fontWeight:
-                                FontWeight.bold,
-
-                            fontSize: 16,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  void dispose() {
+    _userController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

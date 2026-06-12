@@ -14,31 +14,20 @@ import 'tutor_rewards_screen.dart';
 import '../tutor/tutor_dashboard_screen.dart';
 
 class TutorHomeScreen extends StatefulWidget {
-
-  const TutorHomeScreen({
-    super.key,
-  });
+  const TutorHomeScreen({super.key});
 
   @override
-  State<TutorHomeScreen> createState() =>
-      _TutorHomeScreenState();
+  State<TutorHomeScreen> createState() => _TutorHomeScreenState();
 }
 
-class _TutorHomeScreenState
-    extends State<TutorHomeScreen> {
+class _TutorHomeScreenState extends State<TutorHomeScreen> {
+  final TutorRepository _repository = TutorRepository();
 
-  final TutorRepository
-      _repository =
-          TutorRepository();
-
-  final RewardClaimRepository
-      _claimRepository =
-          RewardClaimRepository();
+  final RewardClaimRepository _claimRepository = RewardClaimRepository();
 
   File? tutorImage;
 
-  String tutorName =
-      "Tutor";
+  String tutorName = "Tutor";
 
   @override
   void initState() {
@@ -48,85 +37,68 @@ class _TutorHomeScreenState
   }
 
   /// 👤 CARGAR DATOS DEL TUTOR
-Future<void> loadTutorData() async {
+  Future<void> loadTutorData() async {
+    final user = FirebaseAuth.instance.currentUser;
 
-  final user =
-      FirebaseAuth
-          .instance
-          .currentUser;
+    if (user == null) return;
 
-  if (user == null) return;
+    final data = await _repository.getProfile(user.email!);
 
-  final data =
-      await _repository
-          .getProfile(
-    user.email!,
-  );
+    if (data == null) return;
 
-  if (data == null) return;
+    tutorName = data["username"] ?? "Tutor";
 
-  tutorName =
-      data["username"] ??
-      "Tutor";
+    final photoPath = data["photoUrl"] ?? "";
 
-  final photoPath =
-      data["photoUrl"] ?? "";
+    if (photoPath.isNotEmpty) {
+      final file = File(photoPath);
 
-  if (photoPath.isNotEmpty) {
+      if (await file.exists()) {
+        tutorImage = file;
+      }
+    }
 
-    final file =
-        File(photoPath);
-
-    if (await file.exists()) {
-
-      tutorImage = file;
+    if (mounted) {
+      setState(() {});
     }
   }
 
-  if (mounted) {
-    setState(() {});
-  }
-}
-
-
   void _logout(BuildContext context) async {
-
     await FirebaseAuth.instance.signOut();
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/',
-      (route) => false,
-    );
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final headerColor = isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent;
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(
-        0xFFEAF6FF,
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
 
       appBar: AppBar(
-
-        automaticallyImplyLeading:
-            false,
+        automaticallyImplyLeading: false,
 
         elevation: 0,
 
-        backgroundColor:
-            Colors.blueAccent,
+        backgroundColor: headerColor,
 
-        title: const Text(
-          "Tutor",
-        ),
+        title: const Text("Tutor"),
 
         actions: [
+          IconButton(
+            tooltip: 'Accesibilidad',
+
+            icon: const Icon(Icons.accessibility_new),
+
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
 
           StreamBuilder(
             stream: FirebaseAuth.instance.currentUser?.email == null
@@ -146,8 +118,7 @@ Future<void> loadTutorData() async {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const TutorRewardClaimsScreen(),
+                          builder: (_) => const TutorRewardClaimsScreen(),
                         ),
                       );
                     },
@@ -183,145 +154,86 @@ Future<void> loadTutorData() async {
           ),
 
           IconButton(
+            icon: const Icon(Icons.logout),
 
-            icon: const Icon(
-              Icons.logout,
-            ),
-
-            onPressed: () =>
-                _logout(
-              context,
-            ),
+            onPressed: () => _logout(context),
           ),
         ],
       ),
 
-      body:
-          SingleChildScrollView(
-
+      body: SingleChildScrollView(
         child: Column(
-
           children: [
-
             /// 🔵 HEADER
             Container(
+              width: double.infinity,
 
-              width:
-                  double.infinity,
+              padding: const EdgeInsets.all(25),
 
-              padding:
-                  const EdgeInsets.all(
-                25,
-              ),
+              decoration: BoxDecoration(
+                color: headerColor,
 
-              decoration:
-                  const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(35),
 
-                color:
-                    Colors.blueAccent,
-
-                borderRadius:
-                    BorderRadius.only(
-
-                  bottomLeft:
-                      Radius.circular(
-                    35,
-                  ),
-
-                  bottomRight:
-                      Radius.circular(
-                    35,
-                  ),
+                  bottomRight: Radius.circular(35),
                 ),
               ),
 
               child: Column(
-
                 children: [
-
                   /// 👤 FOTO
                   CircleAvatar(
-
                     radius: 55,
 
-                    backgroundColor:
-                        Colors.white,
+                    backgroundColor: Colors.white,
 
-                    backgroundImage:
-                        tutorImage !=
-                                null
-                            ? FileImage(
-                                tutorImage!,
-                              )
-                            : null,
+                    backgroundImage: tutorImage != null
+                        ? FileImage(tutorImage!)
+                        : null,
 
-                    child:
-                        tutorImage ==
-                                null
-                            ? Icon(
+                    child: tutorImage == null
+                        ? Icon(
+                            Icons.person,
 
-                                Icons
-                                    .person,
+                            size: 60,
 
-                                size:
-                                    60,
-
-                                color: Colors
-                                    .blue
-                                    .shade300,
-                              )
-                            : null,
+                            color: Colors.blue.shade300,
+                          )
+                        : null,
                   ),
 
-                  const SizedBox(
-                    height: 15,
-                  ),
+                  const SizedBox(height: 15),
 
                   Text(
-
                     "Bienvenido $tutorName",
 
-                    style:
-                        const TextStyle(
-
-                      color:
-                          Colors.white,
+                    style: const TextStyle(
+                      color: Colors.white,
 
                       fontSize: 24,
 
-                      fontWeight:
-                          FontWeight
-                              .bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 5,
-                  ),
+                  const SizedBox(height: 5),
 
                   const Text(
-
                     "Administra el progreso y recompensas",
 
-                    textAlign:
-                        TextAlign.center,
+                    textAlign: TextAlign.center,
 
-                    style: TextStyle(
-                      color:
-                          Colors.white70,
-                    ),
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(
-              height: 30,
-            ),
+            const SizedBox(height: 30),
 
             /// 🎁 RECOMPENSAS
             _modernButton(
-
               context,
 
               "Recompensas",
@@ -333,23 +245,16 @@ Future<void> loadTutorData() async {
               Colors.orange,
 
               () {
-
                 Navigator.push(
-
                   context,
 
-                  MaterialPageRoute(
-
-                    builder: (_) =>
-                        const TutorRewardsScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const TutorRewardsScreen()),
                 );
               },
             ),
 
             /// 🔔 SOLICITUDES
             _modernButton(
-
               context,
 
               "Solicitudes",
@@ -361,15 +266,11 @@ Future<void> loadTutorData() async {
               Colors.deepOrange,
 
               () {
-
                 Navigator.push(
-
                   context,
 
                   MaterialPageRoute(
-
-                    builder: (_) =>
-                        const TutorRewardClaimsScreen(),
+                    builder: (_) => const TutorRewardClaimsScreen(),
                   ),
                 );
               },
@@ -377,7 +278,6 @@ Future<void> loadTutorData() async {
 
             /// 👨‍🎓 MI GRUPO
             _modernButton(
-
               context,
 
               "Mi Grupo",
@@ -389,15 +289,11 @@ Future<void> loadTutorData() async {
               Colors.green,
 
               () {
-
                 Navigator.push(
-
                   context,
 
                   MaterialPageRoute(
-
-                    builder: (_) =>
-                        const TutorDashboardScreen(),
+                    builder: (_) => const TutorDashboardScreen(),
                   ),
                 );
               },
@@ -405,7 +301,6 @@ Future<void> loadTutorData() async {
 
             /// ⚡ HISTORIAS
             _modernButton(
-
               context,
 
               "Historias",
@@ -417,23 +312,16 @@ Future<void> loadTutorData() async {
               Colors.purple,
 
               () {
-
                 Navigator.push(
-
                   context,
 
-                  MaterialPageRoute(
-
-                    builder: (_) =>
-                        const StoriesAdminScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const StoriesAdminScreen()),
                 );
               },
             ),
 
             /// 👤 PERFIL
             _modernButton(
-
               context,
 
               "Mi Perfil",
@@ -445,16 +333,10 @@ Future<void> loadTutorData() async {
               Colors.blue,
 
               () async {
-
                 await Navigator.push(
-
                   context,
 
-                  MaterialPageRoute(
-
-                    builder: (_) =>
-                        const TutorProfileScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const TutorProfileScreen()),
                 );
 
                 /// 🔄 RECARGAR FOTO
@@ -469,7 +351,6 @@ Future<void> loadTutorData() async {
 
   /// 🔥 BOTÓN MODERNO
   Widget _modernButton(
-
     BuildContext context,
 
     String title,
@@ -481,132 +362,78 @@ Future<void> loadTutorData() async {
     Color color,
 
     VoidCallback onTap,
-
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
 
       child: GestureDetector(
-
         onTap: onTap,
 
         child: Container(
+          padding: const EdgeInsets.all(20),
 
-          padding:
-              const EdgeInsets.all(
-            20,
-          ),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
 
-          decoration:
-              BoxDecoration(
-
-            color: Colors.white,
-
-            borderRadius:
-                BorderRadius.circular(
-              25,
-            ),
+            borderRadius: BorderRadius.circular(25),
 
             boxShadow: const [
-
               BoxShadow(
-                color:
-                    Colors.black12,
+                color: Colors.black12,
                 blurRadius: 6,
-                offset:
-                    Offset(0, 3),
+                offset: Offset(0, 3),
               ),
             ],
           ),
 
           child: Row(
-
             children: [
-
               Container(
+                padding: const EdgeInsets.all(15),
 
-                padding:
-                    const EdgeInsets.all(
-                  15,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: isDark ? 0.25 : 0.15),
+
+                  borderRadius: BorderRadius.circular(18),
                 ),
 
-                decoration:
-                    BoxDecoration(
-
-                  color: color
-                      .withOpacity(
-                    0.15,
-                  ),
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    18,
-                  ),
-                ),
-
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 35,
-                ),
+                child: Icon(icon, color: color, size: 35),
               ),
 
-              const SizedBox(
-                width: 18,
-              ),
+              const SizedBox(width: 18),
 
               Expanded(
-
                 child: Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
                     Text(
-
                       title,
 
-                      style:
-                          const TextStyle(
-
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontSize: 20,
 
-                        fontWeight:
-                            FontWeight
-                                .bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 5,
-                    ),
+                    const SizedBox(height: 5),
 
                     Text(
-
                       subtitle,
 
                       style: TextStyle(
-                        color: Colors
-                            .grey
-                            .shade700,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const Icon(
-                Icons.arrow_forward_ios,
-              ),
+              const Icon(Icons.arrow_forward_ios),
             ],
           ),
         ),

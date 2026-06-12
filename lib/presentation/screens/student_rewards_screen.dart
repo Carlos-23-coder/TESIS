@@ -11,19 +11,14 @@ import '../../data/services/tutor_resolver.dart';
 class StudentRewardsScreen extends StatefulWidget {
   final int userStars;
 
-  const StudentRewardsScreen({
-    super.key,
-    required this.userStars,
-  });
+  const StudentRewardsScreen({super.key, required this.userStars});
 
   @override
-  State<StudentRewardsScreen> createState() =>
-      _StudentRewardsScreenState();
+  State<StudentRewardsScreen> createState() => _StudentRewardsScreenState();
 }
 
 class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
-  final RewardClaimRepository _claimRepository =
-      RewardClaimRepository();
+  final RewardClaimRepository _claimRepository = RewardClaimRepository();
 
   String? studentEmail;
   String studentName = 'Alumno';
@@ -97,35 +92,35 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
     if (!mounted) return;
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         backgroundColor: Colors.orange,
-        content: Text(
-          'Solicitud enviada. Espera la aprobación de tu tutor.',
-        ),
+        content: Text('Solicitud enviada. Espera la aprobación de tu tutor.'),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final headerColor = isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent;
+
     if (loadingProfile || studentEmail == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: headerColor,
         centerTitle: true,
         title: const Text(
           'Mis Recompensas',
@@ -140,27 +135,17 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF64B5F6),
-                  Color(0xFF1976D2),
-                ],
+                colors: [Color(0xFF64B5F6), Color(0xFF1976D2)],
               ),
               borderRadius: BorderRadius.circular(25),
               boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                ),
+                BoxShadow(color: Colors.black12, blurRadius: 8),
               ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.star,
-                  color: Colors.white,
-                  size: 35,
-                ),
+                const Icon(Icons.star, color: Colors.white, size: 35),
                 const SizedBox(width: 10),
                 Text(
                   '${widget.userStars} estrellas',
@@ -175,9 +160,7 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
           ),
           Expanded(
             child: StreamBuilder<List<RewardClaimModel>>(
-              stream: _claimRepository.watchStudentClaims(
-                studentEmail!,
-              ),
+              stream: _claimRepository.watchStudentClaims(studentEmail!),
               builder: (context, claimsSnapshot) {
                 final claims = claimsSnapshot.data ?? [];
 
@@ -187,9 +170,7 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                       .snapshots(),
                   builder: (context, rewardsSnapshot) {
                     if (!rewardsSnapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     final rewards = rewardsSnapshot.data!.docs;
@@ -204,28 +185,23 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                     }
 
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: rewards.length,
                       itemBuilder: (context, index) {
                         final reward = rewards[index];
-                        final data =
-                            reward.data() as Map<String, dynamic>;
+                        final data = reward.data() as Map<String, dynamic>;
                         final rewardId = reward.id;
-                        final neededStars =
-                            data['requiredStars'] ?? 0;
-                        final unlocked =
-                            widget.userStars >= neededStars;
+                        final neededStars = data['requiredStars'] ?? 0;
+                        final unlocked = widget.userStars >= neededStars;
                         final claimStatus = _claimStatusForReward(
                           rewardId,
                           claims,
                         );
 
-                        final bool obtained = claimStatus ==
-                            RewardClaimStatus.approved;
-                        final bool pending = claimStatus ==
-                            RewardClaimStatus.pending;
+                        final bool obtained =
+                            claimStatus == RewardClaimStatus.approved;
+                        final bool pending =
+                            claimStatus == RewardClaimStatus.pending;
 
                         Color buttonColor = Colors.red;
 
@@ -250,11 +226,13 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(25),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.withValues(alpha: 0.12),
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.26)
+                                    : Colors.blue.withValues(alpha: 0.12),
                                 blurRadius: 12,
                                 offset: const Offset(0, 5),
                               ),
@@ -267,36 +245,35 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                                 height: 180,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
+                                  color: isDark
+                                      ? Colors.blueAccent.withValues(
+                                          alpha: 0.18,
+                                        )
+                                      : Colors.blue.shade100,
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(25),
                                     topRight: Radius.circular(25),
                                   ),
                                 ),
-                                child: data['imagePath'] != null &&
-                                        data['imagePath']
-                                            .toString()
-                                            .isNotEmpty
+                                child:
+                                    data['imagePath'] != null &&
+                                        data['imagePath'].toString().isNotEmpty
                                     ? ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.only(
+                                        borderRadius: const BorderRadius.only(
                                           topLeft: Radius.circular(25),
                                           topRight: Radius.circular(25),
                                         ),
                                         child: Image.file(
                                           File(data['imagePath']),
                                           fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return const Icon(
-                                              Icons.card_giftcard,
-                                              size: 80,
-                                              color: Colors.blue,
-                                            );
-                                          },
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return const Icon(
+                                                  Icons.card_giftcard,
+                                                  size: 80,
+                                                  color: Colors.blue,
+                                                );
+                                              },
                                         ),
                                       )
                                     : const Icon(
@@ -308,27 +285,29 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                               Padding(
                                 padding: const EdgeInsets.all(18),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       data['name'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     Container(
-                                      padding:
-                                          const EdgeInsets.symmetric(
+                                      padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.shade50,
-                                        borderRadius:
-                                            BorderRadius.circular(20),
+                                        color: isDark
+                                            ? Colors.blueAccent.withValues(
+                                                alpha: 0.18,
+                                              )
+                                            : Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
                                         '🎮 ${data['category']}',
@@ -352,28 +331,26 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                                         style: ElevatedButton.styleFrom(
                                           elevation: 0,
                                           backgroundColor: buttonColor,
-                                          padding:
-                                              const EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             vertical: 15,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                         ),
-                                        onPressed: unlocked &&
-                                                !obtained &&
-                                                !pending
+                                        onPressed:
+                                            unlocked && !obtained && !pending
                                             ? () async {
                                                 String tutorEmail =
                                                     data['tutorEmail']
-                                                            ?.toString() ??
-                                                        '';
+                                                        ?.toString() ??
+                                                    '';
 
                                                 if (tutorEmail.isEmpty) {
                                                   tutorEmail =
-                                                      await TutorResolver
-                                                          .resolveTutorEmail();
+                                                      await TutorResolver.resolveTutorEmail();
                                                 }
 
                                                 await _requestReward(

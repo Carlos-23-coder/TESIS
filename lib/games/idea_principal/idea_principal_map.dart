@@ -13,17 +13,13 @@ class IdeaPrincipalMap extends StatefulWidget {
   const IdeaPrincipalMap({super.key});
 
   @override
-  State<IdeaPrincipalMap> createState() =>
-      _IdeaPrincipalMapState();
+  State<IdeaPrincipalMap> createState() => _IdeaPrincipalMapState();
 }
 
-class _IdeaPrincipalMapState
-    extends State<IdeaPrincipalMap> {
-  final ProgressRepository _progressRepository =
-      ProgressRepository();
+class _IdeaPrincipalMapState extends State<IdeaPrincipalMap> {
+  final ProgressRepository _progressRepository = ProgressRepository();
 
-  final StoryRepository _storyRepository =
-      StoryRepository();
+  final StoryRepository _storyRepository = StoryRepository();
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -56,18 +52,13 @@ class _IdeaPrincipalMapState
         if (item['game'] != 'idea_principal') continue;
 
         final int level = item['level'] ?? 1;
-        final int stars =
-            ((item['stars'] ?? 0) as int).clamp(0, 3);
+        final int stars = ((item['stars'] ?? 0) as int).clamp(0, 3);
         final levelIndex = level - 1;
         final current = loadedStars[levelIndex] ?? 0;
 
         if (stars > current) {
           loadedStars[levelIndex] = stars;
-          GameProgress.saveStars(
-            'idea_principal',
-            levelIndex,
-            stars,
-          );
+          GameProgress.saveStars('idea_principal', levelIndex, stars);
         }
       }
 
@@ -84,12 +75,11 @@ class _IdeaPrincipalMapState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
-      appBar: AppBar(
-        title: const Text('Idea Principal'),
-        centerTitle: true,
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(title: const Text('Idea Principal'), centerTitle: true),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -97,11 +87,7 @@ class _IdeaPrincipalMapState
                 children: [
                   const SizedBox(height: 30),
                   for (int i = 0; i < availableLevels.length; i++)
-                    _levelItem(
-                      context,
-                      availableLevels[i],
-                      i,
-                    ),
+                    _levelItem(context, availableLevels[i], i),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -109,18 +95,12 @@ class _IdeaPrincipalMapState
     );
   }
 
-  Widget _levelItem(
-    BuildContext context,
-    int level,
-    int displayIndex,
-  ) {
+  Widget _levelItem(BuildContext context, int level, int displayIndex) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final index = level - 1;
 
-    final stars = starsMap[index] ??
-        GameProgress.getStars(
-          'idea_principal',
-          index,
-        );
+    final stars =
+        starsMap[index] ?? GameProgress.getStars('idea_principal', index);
 
     final bool unlocked;
 
@@ -129,11 +109,9 @@ class _IdeaPrincipalMapState
     } else {
       final previousIndex = availableLevels[displayIndex - 1] - 1;
 
-      unlocked = (starsMap[previousIndex] ??
-              GameProgress.getStars(
-                'idea_principal',
-                previousIndex,
-              )) >
+      unlocked =
+          (starsMap[previousIndex] ??
+              GameProgress.getStars('idea_principal', previousIndex)) >
           0;
     }
 
@@ -146,21 +124,22 @@ class _IdeaPrincipalMapState
               width: 8,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.blue.shade200,
+                color: isDark
+                    ? Colors.blueAccent.withValues(alpha: 0.35)
+                    : Colors.blue.shade200,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
           GestureDetector(
             onTap: unlocked
                 ? () async {
-                    final tutorEmail =
-                        await TutorResolver.resolveTutorEmail();
+                    final tutorEmail = await TutorResolver.resolveTutorEmail();
 
-                    final effectiveLevel =
-                        await _storyRepository.getEffectiveIdeaLevel(
-                      tutorEmail: tutorEmail,
-                      level: level,
-                    );
+                    final effectiveLevel = await _storyRepository
+                        .getEffectiveIdeaLevel(
+                          tutorEmail: tutorEmail,
+                          level: level,
+                        );
 
                     if (effectiveLevel == null) {
                       if (!mounted) return;
@@ -200,9 +179,7 @@ class _IdeaPrincipalMapState
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: unlocked
-                        ? Colors.cyanAccent
-                        : Colors.black26,
+                    color: unlocked ? Colors.cyanAccent : Colors.black26,
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),

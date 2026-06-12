@@ -7,31 +7,19 @@ import '../../data/repositories/progress_repository.dart';
 
 import 'student_progress_screen.dart';
 
-class TutorDashboardScreen
-    extends StatefulWidget {
-
-  const TutorDashboardScreen({
-    super.key,
-  });
+class TutorDashboardScreen extends StatefulWidget {
+  const TutorDashboardScreen({super.key});
 
   @override
-  State<TutorDashboardScreen>
-      createState() =>
-          _TutorDashboardScreenState();
+  State<TutorDashboardScreen> createState() => _TutorDashboardScreenState();
 }
 
-class _TutorDashboardScreenState
-    extends State<TutorDashboardScreen> {
+class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final ProgressRepository _progressRepository = ProgressRepository();
 
-  final ProgressRepository
-      _progressRepository =
-          ProgressRepository();
-
-  List<Map<String, dynamic>>
-      students = [];
+  List<Map<String, dynamic>> students = [];
 
   bool isLoading = true;
 
@@ -48,13 +36,9 @@ class _TutorDashboardScreenState
 
   /// 👨‍🎓 CARGAR ALUMNOS
   Future<void> loadStudents() async {
-
     final snapshot = await _firestore
         .collection("users")
-        .where(
-          "role",
-          isEqualTo: "Alumno",
-        )
+        .where("role", isEqualTo: "Alumno")
         .get();
 
     students = [];
@@ -64,52 +48,27 @@ class _TutorDashboardScreenState
     int starsSum = 0;
 
     for (var doc in snapshot.docs) {
-
       final data = doc.data();
 
-      final email =
-          data["email"] ?? "";
+      final email = data["email"] ?? "";
 
       /// ⭐ ESTRELLAS
-      final stars =
-          await _progressRepository
-              .getTotalStars(email);
+      final stars = await _progressRepository.getTotalStars(email);
 
       /// 📈 PROGRESO
-      final percentage =
-          await _progressRepository
-              .getProgressPercentage(
-            email,
-          );
+      final percentage = await _progressRepository.getProgressPercentage(email);
 
       progressSum += percentage;
 
       starsSum += stars;
 
-      students.add({
-
-        ...data,
-
-        "stars": stars,
-
-        "percentage": percentage,
-      });
+      students.add({...data, "stars": stars, "percentage": percentage});
     }
 
     /// 🏆 ORDENAR POR ESTRELLAS
-    students.sort(
-      (a, b) =>
-          (b["stars"] as int)
-              .compareTo(
-        a["stars"] as int,
-      ),
-    );
+    students.sort((a, b) => (b["stars"] as int).compareTo(a["stars"] as int));
 
-    averageProgress =
-        students.isEmpty
-            ? 0
-            : progressSum /
-                students.length;
+    averageProgress = students.isEmpty ? 0 : progressSum / students.length;
 
     totalStars = starsSum;
 
@@ -125,75 +84,46 @@ class _TutorDashboardScreenState
     required IconData icon,
     required Color color,
   }) {
+    final theme = Theme.of(context);
 
     return Expanded(
-
       child: Container(
+        margin: const EdgeInsets.all(8),
 
-        margin:
-            const EdgeInsets.all(8),
-
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
 
         decoration: BoxDecoration(
+          color: theme.cardColor,
 
-          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
 
-          borderRadius:
-              BorderRadius.circular(
-            20,
-          ),
-
-          boxShadow: [
-
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
         ),
 
         child: Column(
-
           children: [
+            Icon(icon, size: 35, color: color),
 
-            Icon(
-              icon,
-              size: 35,
-              color: color,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
 
             Text(
-
               value,
 
               style: TextStyle(
                 fontSize: 24,
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
 
-            const SizedBox(
-              height: 5,
-            ),
+            const SizedBox(height: 5),
 
             Text(
-
               title,
 
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
 
-              style: const TextStyle(
-                fontSize: 14,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
             ),
           ],
         ),
@@ -203,130 +133,70 @@ class _TutorDashboardScreenState
 
   /// 📈 GRÁFICO
   Widget buildChart() {
+    final theme = Theme.of(context);
 
     return Container(
-
       height: 260,
 
-      padding:
-          const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
 
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
 
       decoration: BoxDecoration(
+        color: theme.cardColor,
 
-        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
 
-        borderRadius:
-            BorderRadius.circular(
-          20,
-        ),
-
-        boxShadow: [
-
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 5,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
       ),
 
       child: BarChart(
-
         BarChartData(
+          borderData: FlBorderData(show: false),
 
-          borderData:
-              FlBorderData(show: false),
+          gridData: FlGridData(show: false),
 
-          gridData:
-              FlGridData(show: false),
-
-          titlesData:
-              FlTitlesData(
-
-            leftTitles:
-                AxisTitles(
-
-              sideTitles:
-                  SideTitles(
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 36,
-                getTitlesWidget:
-                    (value, meta) {
+                getTitlesWidget: (value, meta) {
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
                     child: Text(
-                    value.toInt()
-                        .toString(),
-                    style:
-                        const TextStyle(
-                          fontSize: 12,
-                        ),
+                      value.toInt().toString(),
+                      style: const TextStyle(fontSize: 12),
                     ),
-                  ); 
+                  );
                 },
               ),
             ),
-          
-            topTitles:
-                AxisTitles(
-              sideTitles:
-                  SideTitles(
-                showTitles: false,
-              ),
-            ),
 
-            rightTitles:
-                AxisTitles(
-              sideTitles:
-                  SideTitles(
-                showTitles: false,
-              ),
-            ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
 
-            bottomTitles:
-                AxisTitles(
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
 
-              sideTitles:
-                  SideTitles(
-
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
                 showTitles: true,
 
-                getTitlesWidget:
-                    (value, meta) {
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
 
-                  final index =
-                      value.toInt();
-
-                  if (index >=
-                      students.length) {
-
+                  if (index >= students.length) {
                     return const SizedBox();
                   }
 
-                  final name =
-                      students[index]
-                              ["username"] ??
-                          "";
+                  final name = students[index]["username"] ?? "";
 
                   return Padding(
-
-                    padding:
-                        const EdgeInsets.only(
-                      top: 8,
-                    ),
+                    padding: const EdgeInsets.only(top: 8),
 
                     child: Text(
-
-                      name.toString()
-                          .substring(
+                      name.toString().substring(
                         0,
-                        name.length > 3
-                            ? 3
-                            : name.length,
+                        name.length > 3 ? 3 : name.length,
                       ),
                     ),
                   );
@@ -335,38 +205,23 @@ class _TutorDashboardScreenState
             ),
           ),
 
-          barGroups:
-              students
-                  .asMap()
-                  .entries
-                  .map((entry) {
+          barGroups: students.asMap().entries.map((entry) {
+            final index = entry.key;
 
-            final index =
-                entry.key;
+            final student = entry.value;
 
-            final student =
-                entry.value;
-
-            final stars =
-                student["stars"] ?? 0;
+            final stars = student["stars"] ?? 0;
 
             return BarChartGroupData(
-
               x: index,
 
               barRods: [
-
                 BarChartRodData(
-
-                  toY:
-                      stars.toDouble(),
+                  toY: stars.toDouble(),
 
                   width: 18,
 
-                  borderRadius:
-                      BorderRadius.circular(
-                    6,
-                  ),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ],
             );
@@ -378,112 +233,81 @@ class _TutorDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xFFEAF6FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
 
       appBar: AppBar(
-
-        title: const Text(
-          "Panel del Tutor",
-        ),
+        title: const Text("Panel del Tutor"),
 
         centerTitle: true,
+
+        actions: [
+          IconButton(
+            tooltip: 'Accesibilidad',
+            icon: const Icon(Icons.accessibility_new),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
       ),
 
       body: isLoading
-
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
-
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-
               child: Column(
-
                 children: [
-
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 10),
 
                   /// 📊 ESTADÍSTICAS
                   Row(
-
                     children: [
-
                       statCard(
+                        title: "Alumnos",
 
-                        title:
-                            "Alumnos",
+                        value: students.length.toString(),
 
-                        value:
-                            students.length
-                                .toString(),
+                        icon: Icons.people,
 
-                        icon:
-                            Icons.people,
-
-                        color:
-                            Colors.blue,
+                        color: Colors.blue,
                       ),
 
                       statCard(
+                        title: "Promedio",
 
-                        title:
-                            "Promedio",
+                        value: "${averageProgress.toInt()}%",
 
-                        value:
-                            "${averageProgress.toInt()}%",
+                        icon: Icons.bar_chart,
 
-                        icon:
-                            Icons.bar_chart,
-
-                        color:
-                            Colors.green,
+                        color: Colors.green,
                       ),
                     ],
                   ),
 
                   Row(
-
                     children: [
-
                       statCard(
+                        title: "Estrellas",
 
-                        title:
-                            "Estrellas",
+                        value: totalStars.toString(),
 
-                        value:
-                            totalStars
-                                .toString(),
+                        icon: Icons.star,
 
-                        icon:
-                            Icons.star,
-
-                        color:
-                            Colors.orange,
+                        color: Colors.orange,
                       ),
 
                       statCard(
+                        title: "Top Alumno",
 
-                        title:
-                            "Top Alumno",
+                        value: students.isNotEmpty
+                            ? students.first["username"]
+                            : "-",
 
-                        value:
-                            students.isNotEmpty
-                                ? students.first[
-                                    "username"]
-                                : "-",
+                        icon: Icons.emoji_events,
 
-                        icon:
-                            Icons.emoji_events,
-
-                        color:
-                            Colors.purple,
+                        color: Colors.purple,
                       ),
                     ],
                   ),
@@ -491,200 +315,121 @@ class _TutorDashboardScreenState
                   /// 📈 GRÁFICO
                   buildChart(),
 
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
 
                   /// 🏆 TÍTULO
                   Container(
+                    alignment: Alignment.centerLeft,
 
-                    alignment:
-                        Alignment.centerLeft,
-
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
 
                     child: const Text(
-
                       "🏆 Ranking de alumnos",
 
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 10),
 
                   /// 👨‍🎓 LISTA ALUMNOS
                   ListView.builder(
-
                     shrinkWrap: true,
 
-                    physics:
-                        const NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
 
-                    padding:
-                        const EdgeInsets.all(
-                      16,
-                    ),
+                    padding: const EdgeInsets.all(16),
 
-                    itemCount:
-                        students.length,
+                    itemCount: students.length,
 
-                    itemBuilder:
-                        (context, index) {
-
-                      final student =
-                          students[index];
+                    itemBuilder: (context, index) {
+                      final student = students[index];
 
                       return Card(
-
-                        margin:
-                            const EdgeInsets.only(
-                          bottom: 16,
-                        ),
+                        margin: const EdgeInsets.only(bottom: 16),
 
                         elevation: 4,
 
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            20,
-                          ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
 
                         child: ListTile(
-
-                          contentPadding:
-                              const EdgeInsets.all(
-                            16,
-                          ),
+                          contentPadding: const EdgeInsets.all(16),
 
                           /// 👤 FOTO
-                          leading:
-                              CircleAvatar(
-
+                          leading: CircleAvatar(
                             radius: 30,
 
-                            backgroundColor:
-                                Colors.blue
-                                    .shade100,
+                            backgroundColor: Colors.blue.shade100,
 
                             backgroundImage:
-                              student["photoUrl"] != null &&
-                                      student["photoUrl"]
-                                          .toString()
-                                          .isNotEmpty
-                                  ? FileImage(
-                                      File(
-                                        student["photoUrl"],
-                                      ),
-                                    )
-                                  : null,
+                                student["photoUrl"] != null &&
+                                    student["photoUrl"].toString().isNotEmpty
+                                ? FileImage(File(student["photoUrl"]))
+                                : null,
 
-                            child:
-                                student["photoUrl"] ==
-                                        null
-                                    ? const Icon(
-                                        Icons.person,
-                                        size: 30,
-                                        color:
-                                            Colors.blue,
-                                      )
-                                    : null,
+                            child: student["photoUrl"] == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: Colors.blue,
+                                  )
+                                : null,
                           ),
 
                           /// 👨‍🎓 NOMBRE
                           title: Text(
+                            student["username"] ?? "Alumno",
 
-                            student["username"] ??
-                                "Alumno",
-
-                            style:
-                                const TextStyle(
-                              fontWeight:
-                                  FontWeight.bold,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
                               fontSize: 20,
                             ),
                           ),
 
                           subtitle: Column(
-
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
 
                             children: [
+                              const SizedBox(height: 5),
 
-                              const SizedBox(
-                                height: 5,
-                              ),
+                              Text(student["email"] ?? ""),
 
-                              Text(
-                                student["email"] ??
-                                    "",
-                              ),
-
-                              const SizedBox(
-                                height: 10,
-                              ),
+                              const SizedBox(height: 10),
 
                               /// ⭐ ESTRELLAS
                               Row(
-
                                 children: [
-
                                   const Icon(
                                     Icons.star,
-                                    color:
-                                        Colors.amber,
+                                    color: Colors.amber,
                                     size: 20,
                                   ),
 
-                                  const SizedBox(
-                                    width: 5,
-                                  ),
+                                  const SizedBox(width: 5),
 
-                                  Text(
-                                    "${student["stars"]} estrellas",
-                                  ),
+                                  Text("${student["stars"]} estrellas"),
                                 ],
                               ),
 
-                              const SizedBox(
-                                height: 10,
-                              ),
+                              const SizedBox(height: 10),
 
                               /// 📈 PROGRESO
                               ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
 
-                                borderRadius:
-                                    BorderRadius.circular(
-                                  10,
-                                ),
-
-                                child:
-                                    LinearProgressIndicator(
-
-                                  value:
-                                      (student["percentage"] ??
-                                              0) /
-                                          100,
+                                child: LinearProgressIndicator(
+                                  value: (student["percentage"] ?? 0) / 100,
 
                                   minHeight: 8,
                                 ),
                               ),
 
-                              const SizedBox(
-                                height: 5,
-                              ),
+                              const SizedBox(height: 5),
 
                               Text(
                                 "${student["percentage"].toStringAsFixed(1)}% completado",
@@ -692,25 +437,16 @@ class _TutorDashboardScreenState
                             ],
                           ),
 
-                          trailing:
-                              const Icon(
-                            Icons.arrow_forward_ios,
-                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios),
 
                           /// 🔥 PERFIL
                           onTap: () {
-
                             Navigator.push(
-
                               context,
 
                               MaterialPageRoute(
-
                                 builder: (_) =>
-                                    StudentProgressScreen(
-                                  student:
-                                      student,
-                                ),
+                                    StudentProgressScreen(student: student),
                               ),
                             );
                           },

@@ -68,9 +68,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   }
 
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -80,9 +78,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   }
 
   Future<void> takePhoto() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
-    );
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
       setState(() {
@@ -128,26 +124,22 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       return;
     }
 
-    String imagePath =
-    _editingReward?.imagePath ?? "";
+    String imagePath = _editingReward?.imagePath ?? "";
 
-      if (selectedImage != null) {
+    if (selectedImage != null) {
+      final directory = await getApplicationDocumentsDirectory();
 
-        final directory =
-            await getApplicationDocumentsDirectory();
+      final savedImage = await File(selectedImage!.path).copy(
+        '${directory.path}/reward_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
 
-        final savedImage =
-            await File(
-              selectedImage!.path,
-            ).copy(
-          '${directory.path}/reward_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        );
-
-        imagePath = savedImage.path;
-      }
+      imagePath = savedImage.path;
+    }
 
     final reward = RewardModel(
-      id: _editingReward?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          _editingReward?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       category: category,
       imagePath: imagePath,
@@ -179,10 +171,13 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   }
 
   InputDecoration inputStyle(String label) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: isDark ? const Color(0xFF1F2937) : Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide.none,
@@ -197,11 +192,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       return const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.card_giftcard,
-            size: 80,
-            color: Colors.blueAccent,
-          ),
+          Icon(Icons.card_giftcard, size: 80, color: Colors.blueAccent),
           SizedBox(height: 15),
           Text("Agregar imagen"),
         ],
@@ -237,17 +228,13 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   }
 
   Widget _rewardThumbnail(RewardModel reward) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final file = File(reward.imagePath);
 
     if (reward.imagePath.isNotEmpty && file.existsSync()) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: Image.file(
-          file,
-          width: 64,
-          height: 64,
-          fit: BoxFit.cover,
-        ),
+        child: Image.file(file, width: 64, height: 64, fit: BoxFit.cover),
       );
     }
 
@@ -255,23 +242,26 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: Colors.blue.shade100,
+        color: isDark
+            ? Colors.blueAccent.withValues(alpha: 0.18)
+            : Colors.blue.shade100,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Icon(
-        Icons.card_giftcard,
-        color: Colors.blueAccent,
-      ),
+      child: const Icon(Icons.card_giftcard, color: Colors.blueAccent),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final headerColor = isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF6FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Recompensas"),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: headerColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -290,7 +280,9 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: isDark
+                      ? Colors.blueAccent.withValues(alpha: 0.18)
+                      : Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: Colors.blue.shade200),
                 ),
@@ -317,13 +309,12 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color: isDark
+                      ? Colors.blueAccent.withValues(alpha: 0.18)
+                      : Colors.blue.shade100,
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                    ),
+                    BoxShadow(color: Colors.black12, blurRadius: 6),
                   ],
                 ),
                 child: _buildPreviewImage(),
@@ -367,18 +358,12 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
               value: category,
               decoration: inputStyle("Categoría"),
               items: const [
-                DropdownMenuItem(
-                  value: "Comida",
-                  child: Text("🍔 Comida"),
-                ),
+                DropdownMenuItem(value: "Comida", child: Text("🍔 Comida")),
                 DropdownMenuItem(
                   value: "Videojuego",
                   child: Text("🎮 Videojuego"),
                 ),
-                DropdownMenuItem(
-                  value: "Juguete",
-                  child: Text("🧸 Juguete"),
-                ),
+                DropdownMenuItem(value: "Juguete", child: Text("🧸 Juguete")),
               ],
               onChanged: (value) {
                 setState(() {
@@ -415,10 +400,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
             const SizedBox(height: 30),
             const Text(
               "Mis recompensas creadas",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             if (_isLoadingRewards)
@@ -433,7 +415,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Text(
@@ -456,7 +438,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: const [
                           BoxShadow(
@@ -485,7 +467,9 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
                                 Text(
                                   "${reward.category} · ${reward.requiredStars} estrellas",
                                   style: TextStyle(
-                                    color: Colors.grey.shade700,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.grey.shade700,
                                   ),
                                 ),
                               ],
