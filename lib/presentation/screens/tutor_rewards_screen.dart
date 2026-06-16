@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/reward_model.dart';
 import '../../data/repositories/reward_repository.dart';
+import '../../data/services/tutor_resolver.dart';
 
 class TutorRewardsScreen extends StatefulWidget {
   const TutorRewardsScreen({super.key});
@@ -17,7 +17,6 @@ class TutorRewardsScreen extends StatefulWidget {
 
 class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   final RewardRepository _rewardRepository = RewardRepository();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _nameController = TextEditingController();
   final _starsController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -43,17 +42,7 @@ class _TutorRewardsScreenState extends State<TutorRewardsScreen> {
   }
 
   Future<void> _loadTutorRewards() async {
-    final User? currentUser = _auth.currentUser;
-    _currentTutorEmail = currentUser?.email;
-
-    if (_currentTutorEmail == null) {
-      if (!mounted) return;
-      setState(() {
-        _rewards = [];
-        _isLoadingRewards = false;
-      });
-      return;
-    }
+    _currentTutorEmail = TutorResolver.defaultTutorEmail;
 
     final rewards = await _rewardRepository.getRewardsByTutor(
       _currentTutorEmail!,

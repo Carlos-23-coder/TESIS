@@ -1,25 +1,24 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../games/idea_principal/idea_principal_data.dart';
+import '../services/local_image_service.dart';
 import '../../games/preguntas_rapidas/preguntas_rapidas_data.dart';
 import '../database/database_helper.dart';
 import '../models/rapid_question_model.dart';
+import '../repositories/progress_repository.dart';
 import '../models/story_override_model.dart';
 
 class StoryRepository {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
-  final FirebaseStorage _storage =
-      FirebaseStorage.instance;
-
   final DatabaseHelper _dbHelper =
       DatabaseHelper.instance;
+
+  String _normalizeEmail(String email) => email.trim().toLowerCase();
 
   int _defaultMaxLevel(String game) {
     if (game == StoryGameType.ideaPrincipal) {
@@ -78,6 +77,8 @@ class StoryRepository {
     required String tutorEmail,
     required String game,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     await cacheTutorStories(tutorEmail);
 
     final overrides =
@@ -143,6 +144,8 @@ class StoryRepository {
     required String tutorEmail,
     required int level,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     await cacheTutorStories(tutorEmail);
 
     final override = await _getOverride(
@@ -193,6 +196,8 @@ class StoryRepository {
     required String tutorEmail,
     required int level,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     await cacheTutorStories(tutorEmail);
 
     final override = await _getOverride(
@@ -243,6 +248,8 @@ class StoryRepository {
     required String game,
     required int level,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     final override = await _getOverride(
       tutorEmail,
       game,
@@ -304,27 +311,18 @@ class StoryRepository {
     required StoryOverrideModel override,
     File? newImage,
   }) async {
+    final tutorEmail = _normalizeEmail(override.tutorEmail);
     var imagePath = override.imagePath;
     var imageUrl = override.imageUrl;
 
     if (newImage != null) {
-      final directory =
-          await getApplicationDocumentsDirectory();
-
-      final savedImage = await newImage.copy(
-        '${directory.path}/story_${override.game}_${override.level}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      imagePath = await LocalImageService.saveStoryImage(
+        tutorEmail: tutorEmail,
+        game: override.game,
+        level: override.level,
+        image: newImage,
       );
-
-      imagePath = savedImage.path;
-
-      try {
-        imageUrl = await _uploadImage(
-          override.tutorEmail,
-          override.game,
-          override.level,
-          savedImage,
-        );
-      } catch (_) {}
+      imageUrl = '';
     }
 
     final hasDefault = _hasDefaultLevel(
@@ -334,7 +332,7 @@ class StoryRepository {
 
     final model = StoryOverrideModel(
       id: override.id,
-      tutorEmail: override.tutorEmail,
+      tutorEmail: tutorEmail,
       game: override.game,
       level: override.level,
       title: override.title,
@@ -374,6 +372,8 @@ class StoryRepository {
     required String game,
     required int level,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     final id = StoryOverrideModel.buildId(
       tutorEmail,
       game,
@@ -401,14 +401,25 @@ class StoryRepository {
     required String game,
     required int level,
   }) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     await restoreDefault(
       tutorEmail: tutorEmail,
       game: game,
       level: level,
     );
+
+    if (!_hasDefaultLevel(game, level)) {
+      await ProgressRepository().deleteProgressForLevel(
+        game: game,
+        level: level,
+      );
+    }
   }
 
   Future<void> cacheTutorStories(String tutorEmail) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     try {
       final snapshot = await _firestore
           .collection('story_overrides')
@@ -416,7 +427,12 @@ class StoryRepository {
           .get();
 
       for (final doc in snapshot.docs) {
-        final model = StoryOverrideModel.fromMap(doc.data());
+        final data = Map<String, dynamic>.from(doc.data());
+        data['tutorEmail'] = _normalizeEmail(
+          data['tutorEmail']?.toString() ?? tutorEmail,
+        );
+
+        final model = StoryOverrideModel.fromMap(data);
 
         await _saveOverrideOffline(
           model.copyWith(synced: 1),
@@ -430,6 +446,8 @@ class StoryRepository {
     String game,
     int level,
   ) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     final id = StoryOverrideModel.buildId(
       tutorEmail,
       game,
@@ -457,6 +475,8 @@ class StoryRepository {
     String tutorEmail,
     String game,
   ) async {
+    tutorEmail = _normalizeEmail(tutorEmail);
+
     final db = await _dbHelper.database;
 
     final results = await db.query(
@@ -481,24 +501,6 @@ class StoryRepository {
       override.toDbMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-  }
-
-  Future<String> _uploadImage(
-    String tutorEmail,
-    String game,
-    int level,
-    File image,
-  ) async {
-    final safeEmail =
-        tutorEmail.replaceAll('@', '_at_');
-
-    final ref = _storage.ref().child(
-          'story_overrides/$safeEmail/$game/level_$level.jpg',
-        );
-
-    await ref.putFile(image);
-
-    return ref.getDownloadURL();
   }
 
   Future<void> syncUnsyncedOverrides() async {

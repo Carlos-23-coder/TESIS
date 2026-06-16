@@ -34,6 +34,10 @@ class _IdeaPrincipalMapState extends State<IdeaPrincipalMap> {
   }
 
   Future<void> loadData() async {
+    if (user != null) {
+      await TutorResolver.ensureStudentLinkedToTutor(user!.email!);
+    }
+
     final tutorEmail = await TutorResolver.resolveTutorEmail();
 
     final levels = await _storyRepository.listLevels(
@@ -45,6 +49,8 @@ class _IdeaPrincipalMapState extends State<IdeaPrincipalMap> {
       final progress = await _progressRepository.getStudentProgress(
         user!.email!,
       );
+
+      GameProgress.clearGame('idea_principal');
 
       final loadedStars = <int, int>{};
 

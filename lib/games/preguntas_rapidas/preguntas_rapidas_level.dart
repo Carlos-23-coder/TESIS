@@ -216,6 +216,18 @@ class _PreguntasRapidasLevelState extends State<PreguntasRapidasLevel> {
   }
 
   Future<void> startGame() async {
+    if (widget.level.questions.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Este nivel no tiene preguntas configuradas.'),
+        ),
+      );
+
+      return;
+    }
+
     await _stopStoryReading();
 
     _prepareQuestion();

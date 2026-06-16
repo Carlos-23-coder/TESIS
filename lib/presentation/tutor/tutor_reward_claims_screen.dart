@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/models/reward_claim_model.dart';
 import '../../data/repositories/reward_claim_repository.dart';
+import '../../data/services/tutor_resolver.dart';
 
 class TutorRewardClaimsScreen extends StatelessWidget {
   const TutorRewardClaimsScreen({super.key});
@@ -11,13 +11,7 @@ class TutorRewardClaimsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final tutorEmail = FirebaseAuth.instance.currentUser?.email;
-
-    if (tutorEmail == null) {
-      return const Scaffold(
-        body: Center(child: Text('No se pudo identificar al tutor.')),
-      );
-    }
+    final tutorEmail = TutorResolver.defaultTutorEmail;
 
     final repository = RewardClaimRepository();
 

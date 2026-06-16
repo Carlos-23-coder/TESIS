@@ -31,4 +31,12 @@ class GameProgress {
   static void clear() {
     earnedStars.clear();
   }
+
+  static void removeStars(String game, int levelIndex) {
+    earnedStars.remove(_key(game, levelIndex));
+  }
+
+  static void clearGame(String game) {
+    earnedStars.removeWhere((key, _) => key.startsWith('${game}_'));
+  }
 }

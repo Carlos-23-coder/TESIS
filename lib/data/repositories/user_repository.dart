@@ -8,10 +8,13 @@ class UserRepository {
   final DatabaseHelper dbHelper =
       DatabaseHelper.instance;
 
-  /// CREAR USUARIO
+  /// CREAR USUARIO (solo alumnos desde registro)
   Future<int> createUser(
     User user,
   ) async {
+    if (user.role != 'Alumno') {
+      throw Exception('Solo se pueden registrar alumnos.');
+    }
 
     final db =
         await dbHelper.database;

@@ -66,9 +66,9 @@ class DatabaseHelper {
     /// TUTOR POR DEFECTO
     await db.insert('users', {
 
-      'username': 'tutor',
-      'email': 'tutor@lectoplay.com',
-      'password': '12345678',
+      'username': 'John',
+      'email': 'tutorjohn@gmail.com',
+      'password': 'John1234',
       'pin': '1234',
       'role': 'Tutor',
     });

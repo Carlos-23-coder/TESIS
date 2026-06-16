@@ -19,10 +19,13 @@ class ProgressRepository {
 
     try {
 
+      final normalizedUserId =
+          progress.userId.trim().toLowerCase();
+
       final cappedStars = progress.stars.clamp(0, 3);
 
       final existing = await _getLevelProgress(
-        progress.userId,
+        normalizedUserId,
         progress.game,
         progress.level,
       );
@@ -35,7 +38,7 @@ class ProgressRepository {
       }
 
       final updated = ProgressModel(
-        userId: progress.userId,
+        userId: normalizedUserId,
         level: progress.level,
         stars: cappedStars,
         game: progress.game,
@@ -99,12 +102,14 @@ class ProgressRepository {
     String game,
     int level,
   ) async {
+    userId = userId.trim().toLowerCase();
+
     try {
       final db = await _dbHelper.database;
 
       final results = await db.query(
         'progress',
-        where: 'email = ? AND game = ? AND level = ?',
+        where: 'LOWER(email) = ? AND game = ? AND level = ?',
         whereArgs: [userId, game, level],
       );
 
@@ -154,7 +159,7 @@ class ProgressRepository {
     );
   }
 
-  /// 📚 OBTENER PROGRESO DEL ALUMNO (OFFLINE FIRST)
+  /// 📚 OBTENER PROGRESO DEL ALUMNO (OFFLINE + FIREBASE)
   Future<List<Map<String, dynamic>>>
       getStudentProgress(
     String userId,
@@ -162,20 +167,22 @@ class ProgressRepository {
 
     try {
 
-      /// 📱 INTENTA OBTENER OFFLINE
+      final normalizedUserId = userId.trim().toLowerCase();
+
       final offlineProgress =
           await _getStudentProgressOffline(
-        userId,
+        normalizedUserId,
       );
 
-      if (offlineProgress.isNotEmpty) {
-        return offlineProgress;
-      }
-
-      /// 🌐 SI NO HAY OFFLINE, OBTIENE DE FIREBASE
-      return await _getStudentProgressFirebase(
-        userId,
+      final firebaseProgress =
+          await _getStudentProgressFirebase(
+        normalizedUserId,
       );
+
+      return _mergeProgressEntries([
+        ...offlineProgress,
+        ...firebaseProgress,
+      ], normalizedUserId);
 
     } catch (e) {
 
@@ -185,6 +192,40 @@ class ProgressRepository {
 
       return [];
     }
+  }
+
+  List<Map<String, dynamic>> _mergeProgressEntries(
+    List<Map<String, dynamic>> entries,
+    String userId,
+  ) {
+    final bestByLevel = <String, Map<String, dynamic>>{};
+
+    for (final doc in entries) {
+      final game = doc['game']?.toString() ?? '';
+      final level = doc['level'] ?? 0;
+      final stars =
+          ((doc['stars'] ?? doc['score'] ?? 0) as int).clamp(0, 3);
+
+      if (game.isEmpty) {
+        continue;
+      }
+
+      final key = '${game}_$level';
+      final currentStars =
+          ((bestByLevel[key]?['stars'] ?? 0) as int).clamp(0, 3);
+
+      if (stars >= currentStars) {
+        bestByLevel[key] = {
+          'email': userId,
+          'userId': userId,
+          'game': game,
+          'level': level,
+          'stars': stars,
+        };
+      }
+    }
+
+    return bestByLevel.values.toList();
   }
 
   /// 📱 OBTENER PROGRESO OFFLINE
@@ -202,7 +243,7 @@ class ProgressRepository {
 
         'progress',
 
-        where: 'email = ?',
+        where: 'LOWER(email) = ?',
 
         whereArgs: [userId],
       );
@@ -244,7 +285,7 @@ class ProgressRepository {
     }
   }
 
-  /// ⭐ TOTAL DE ESTRELLAS (OFFLINE FIRST)
+  /// ⭐ TOTAL DE ESTRELLAS
   Future<int> getTotalStars(
     String userId,
   ) async {
@@ -254,28 +295,45 @@ class ProgressRepository {
       userId,
     );
 
-    final bestByLevel = <String, int>{};
+    return progress.fold<int>(
+      0,
+      (total, doc) =>
+          total + ((doc['stars'] ?? 0) as int).clamp(0, 3),
+    );
+  }
 
-    for (var doc in progress) {
-      final game = doc['game']?.toString() ?? '';
-      final level = doc['level'] ?? 0;
-      final stars =
-          ((doc['stars'] ?? 0) as int).clamp(0, 3);
+  /// 🗑️ BORRAR PROGRESO DE UN NIVEL PARA TODOS LOS ALUMNOS
+  Future<void> deleteProgressForLevel({
+    required String game,
+    required int level,
+  }) async {
+    final db = await _dbHelper.database;
 
-      if (game.isEmpty) continue;
+    await db.delete(
+      'progress',
+      where: 'game = ? AND level = ?',
+      whereArgs: [game, level],
+    );
 
-      final key = '${game}_$level';
-      final current = bestByLevel[key] ?? 0;
+    try {
+      final snapshot = await _firestore
+          .collection('progress')
+          .where('game', isEqualTo: game)
+          .get();
 
-      if (stars > current) {
-        bestByLevel[key] = stars;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final docLevel = data['level'];
+
+        if (docLevel == level) {
+          await doc.reference.delete();
+        }
       }
+    } catch (e) {
+      print('ERROR BORRAR PROGRESO DEL NIVEL: $e');
     }
 
-    return bestByLevel.values.fold<int>(
-      0,
-      (total, stars) => total + stars,
-    );
+    GameProgress.removeStars(game, level - 1);
   }
 
   /// 🔄 RESETEAR PROGRESO DE UN ALUMNO (PARA PRUEBAS)

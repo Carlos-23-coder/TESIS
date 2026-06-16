@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
+import 'tutor_resolver.dart';
 
 class FirebaseService {
 
@@ -34,11 +35,11 @@ class FirebaseService {
     final normalizedEmail =
     email.trim().toLowerCase();
 
-    await _db
-        .collection('users')
-        .doc(normalizedEmail)
-        .set({
+    if (role != 'Alumno') {
+      throw Exception('Solo se pueden registrar alumnos.');
+    }
 
+    final userData = <String, dynamic>{
       'username': username,
       'email': normalizedEmail,
       'role': role,
@@ -49,9 +50,14 @@ class FirebaseService {
       'password': password,
       'pin': pin,
 
-      'createdAt':
-          FieldValue.serverTimestamp(),
-    });
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    if (role == 'Alumno') {
+      userData['tutorEmail'] = TutorResolver.defaultTutorEmail;
+    }
+
+    await _db.collection('users').doc(normalizedEmail).set(userData);
   }
 
   /// 🔐 LOGIN FLEXIBLE (OFFLINE FIRST)

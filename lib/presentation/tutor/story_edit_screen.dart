@@ -152,6 +152,21 @@ class _StoryEditScreenState extends State<StoryEditScreen> {
         return;
       }
 
+      for (int i = 0; i < 5; i++) {
+        final text = questionControllers[i].text.trim();
+
+        if (text.isEmpty) {
+          continue;
+        }
+
+        for (final controller in rapidOptionControllers[i]) {
+          if (controller.text.trim().isEmpty) {
+            _showMessage('Completa las 4 opciones de cada pregunta.');
+            return;
+          }
+        }
+      }
+
       final hasQuestion = questionControllers.any(
         (controller) => controller.text.trim().isNotEmpty,
       );

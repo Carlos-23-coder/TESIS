@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 
 import '../../data/models/user_model.dart';
@@ -22,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final UserRepository _userRepository = UserRepository();
   final FirebaseService _firebaseService = FirebaseService();
 
-  String _role = 'Alumno';
+  static const String _role = 'Alumno';
   bool _obscurePassword = true;
   bool _obscurePin = true;
 
@@ -53,7 +54,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       hasLower = false;
       hasNumber = false;
       hasMinLength = false;
-      _role = 'Alumno';
     });
   }
 
@@ -93,6 +93,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: appUser.password,
         pin: appUser.pin,
       );
+
+      await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
 
@@ -170,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const AuthLogoHeader(
                 title: 'Crear cuenta',
-                subtitle: 'Prepara tu perfil para aprender a tu ritmo.',
+                subtitle: 'Registro solo para alumnos.',
                 icon: Icons.person_add_alt_1,
               ),
               const SizedBox(height: 24),
@@ -206,23 +208,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
 
                   return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                initialValue: _role,
-                decoration: authInputDecoration(
-                  'Tipo de cuenta',
-                  icon: Icons.school_outlined,
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'Tutor', child: Text('Tutor')),
-                  DropdownMenuItem(value: 'Alumno', child: Text('Alumno')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _role = value!;
-                  });
                 },
               ),
               const SizedBox(height: 14),

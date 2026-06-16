@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/story_override_model.dart';
 import '../../data/repositories/story_repository.dart';
+import '../../data/services/tutor_resolver.dart';
 import 'story_edit_screen.dart';
 
 class StoriesAdminScreen extends StatefulWidget {
@@ -27,15 +28,7 @@ class _StoriesAdminScreenState extends State<StoriesAdminScreen> {
   }
 
   Future<void> loadData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    tutorEmail = user?.email;
-
-    if (tutorEmail == null) {
-      setState(() {
-        loading = false;
-      });
-      return;
-    }
+    tutorEmail = TutorResolver.defaultTutorEmail;
 
     final idea = await _repository.listLevels(
       tutorEmail: tutorEmail!,

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/progress_repository.dart';
+import '../../data/services/local_image_service.dart';
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -79,7 +80,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
     final directory = await getApplicationDocumentsDirectory();
 
-    final imagePath = '${directory.path}/${user!.email}.jpg';
+    final imagePath =
+        '${directory.path}/${LocalImageService.profileImagePath(user!.email!)}';
 
     final file = File(imagePath);
 
@@ -143,21 +145,22 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     if (image == null) return;
 
     /// ✅ GUARDAR LOCALMENTE
-    final directory = await getApplicationDocumentsDirectory();
+    final savedImagePath = await LocalImageService.saveProfileImage(
+      email: user!.email!,
+      image: File(image.path),
+    );
 
-    final savedImage = await File(
-      image.path,
-    ).copy('${directory.path}/${user!.email}.jpg');
+    final savedFile = File(savedImagePath);
 
     setState(() {
-      localImage = savedImage;
+      localImage = savedFile;
     });
 
-    await _profileRepository.savePhotoUrl(user!.email!, savedImage.path);
+    await _profileRepository.savePhotoUrl(user!.email!, savedImagePath);
 
     setState(() {
-      localImage = savedImage;
-      photoUrl = savedImage.path;
+      localImage = savedFile;
+      photoUrl = savedImagePath;
     });
     if (!mounted) return;
 

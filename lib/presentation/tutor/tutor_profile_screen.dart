@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/repositories/tutor_repository.dart';
+import '../../data/services/local_image_service.dart';
 
 class TutorProfileScreen extends StatefulWidget {
   const TutorProfileScreen({super.key});
@@ -58,13 +59,22 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
 
     email = data["email"] ?? "Sin correo";
 
-    final photoPath = data["photoUrl"] ?? "";
+    final directory = await getApplicationDocumentsDirectory();
+    final localPath =
+        '${directory.path}/${LocalImageService.profileImagePath(user!.email!)}';
+    final localFile = File(localPath);
 
-    if (photoPath.isNotEmpty) {
-      final file = File(photoPath);
+    if (await localFile.exists()) {
+      _image = localFile;
+    } else {
+      final photoPath = data["photoUrl"] ?? "";
 
-      if (await file.exists()) {
-        _image = file;
+      if (photoPath.isNotEmpty) {
+        final file = File(photoPath);
+
+        if (await file.exists()) {
+          _image = file;
+        }
       }
     }
 
@@ -92,17 +102,16 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
 
     if (picked == null) return;
 
-    final directory = await getApplicationDocumentsDirectory();
-
-    final savedImage = await File(
-      picked.path,
-    ).copy('${directory.path}/${user!.email}.jpg');
+    final savedImagePath = await LocalImageService.saveProfileImage(
+      email: user!.email!,
+      image: File(picked.path),
+    );
 
     /// 💾 GUARDAR RUTA LOCAL
-    await _repository.savePhotoUrl(user!.email!, savedImage.path);
+    await _repository.savePhotoUrl(user!.email!, savedImagePath);
 
     setState(() {
-      _image = savedImage;
+      _image = File(savedImagePath);
     });
 
     if (!mounted) return;

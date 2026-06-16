@@ -45,7 +45,8 @@ class StoryOverrideModel {
     String game,
     int level,
   ) {
-    return '${tutorEmail}_${game}_$level';
+    final normalized = tutorEmail.trim().toLowerCase();
+    return '${normalized}_${game}_$level';
   }
 
   Map<String, dynamic> toMap() {
@@ -140,7 +141,7 @@ class StoryOverrideModel {
 
     return StoryOverrideModel(
       id: map['id'] ?? '',
-      tutorEmail: map['tutorEmail'] ?? '',
+      tutorEmail: (map['tutorEmail'] ?? '').toString().trim().toLowerCase(),
       game: map['game'] ?? '',
       level: map['level'] ?? 1,
       title: map['title'] ?? '',

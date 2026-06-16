@@ -34,6 +34,10 @@ class _PreguntasRapidasMapState extends State<PreguntasRapidasMap> {
   }
 
   Future<void> loadLevelsAndProgress() async {
+    if (user != null) {
+      await TutorResolver.ensureStudentLinkedToTutor(user!.email!);
+    }
+
     final tutorEmail = await TutorResolver.resolveTutorEmail();
 
     final levels = await _storyRepository.listLevels(
@@ -45,6 +49,8 @@ class _PreguntasRapidasMapState extends State<PreguntasRapidasMap> {
       final progress = await _progressRepository.getStudentProgress(
         user!.email!,
       );
+
+      GameProgress.clearGame('preguntas_rapidas');
 
       final loadedStars = <int, int>{};
 
