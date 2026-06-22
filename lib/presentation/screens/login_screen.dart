@@ -76,7 +76,9 @@ class _LoginScreenState extends State<LoginScreen> {
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;
 
-      if (_role == 'Tutor') {
+      if (_role == 'Admin') {
+        Navigator.pushReplacementNamed(context, '/admin');
+      } else if (_role == 'Tutor') {
         Navigator.pushReplacementNamed(context, '/tutor');
       } else {
         Navigator.pushReplacementNamed(context, '/alumno');
@@ -122,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.school_outlined,
                 ),
                 items: const [
+                  DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                   DropdownMenuItem(value: 'Tutor', child: Text('Tutor')),
                   DropdownMenuItem(value: 'Alumno', child: Text('Alumno')),
                 ],

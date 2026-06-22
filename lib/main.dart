@@ -13,6 +13,7 @@ import 'presentation/screens/tutor_home_screen.dart';
 import 'presentation/screens/alumno_home_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/user_profile_screen.dart';
+import 'presentation/admin/admin_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -114,6 +115,8 @@ class LectoPlayApp extends StatelessWidget {
 
             /// 👨‍🎓 HOME ALUMNO
             '/alumno': (context) => const AlumnoHomeScreen(),
+
+            '/admin': (context) => const AdminHomeScreen(),
 
             '/settings': (context) => const SettingsScreen(),
 

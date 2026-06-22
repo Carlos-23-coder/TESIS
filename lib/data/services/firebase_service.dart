@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import 'tutor_resolver.dart';
@@ -58,6 +59,53 @@ class FirebaseService {
     }
 
     await _db.collection('users').doc(normalizedEmail).set(userData);
+  }
+
+  /// CREAR TUTOR DESDE EL PANEL ADMIN
+  /// Usa una app secundaria para no reemplazar la sesion actual del admin.
+  Future<void> createTutorByAdmin({
+    required String email,
+    required String username,
+    required String password,
+    required String pin,
+  }) async {
+    final normalizedEmail =
+        email.trim().toLowerCase();
+
+    FirebaseApp? secondaryApp;
+
+    try {
+      secondaryApp = await Firebase.initializeApp(
+        name: 'AdminTutorCreation',
+        options: Firebase.app().options,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'duplicate-app') {
+        secondaryApp = Firebase.app('AdminTutorCreation');
+      } else {
+        rethrow;
+      }
+    }
+
+    final secondaryAuth =
+        FirebaseAuth.instanceFor(app: secondaryApp);
+
+    await secondaryAuth.createUserWithEmailAndPassword(
+      email: normalizedEmail,
+      password: password,
+    );
+
+    await secondaryAuth.signOut();
+
+    await _db.collection('users').doc(normalizedEmail).set({
+      'username': username,
+      'email': normalizedEmail,
+      'role': 'Tutor',
+      'password': password,
+      'pin': pin,
+      'createdAt': FieldValue.serverTimestamp(),
+      'createdBy': _auth.currentUser?.email ?? 'admin-local',
+    });
   }
 
   /// 🔐 LOGIN FLEXIBLE (OFFLINE FIRST)

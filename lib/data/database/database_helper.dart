@@ -20,7 +20,43 @@ class DatabaseHelper {
     _database =
         await _initDB('lectoplay.db');
 
+    await _ensureDefaultUsers(_database!);
+
     return _database!;
+  }
+
+  Future<void> _ensureDefaultUsers(Database db) async {
+    final admin = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: ['admin@lectoplay.com'],
+    );
+
+    if (admin.isEmpty) {
+      await db.insert('users', {
+        'username': 'Admin',
+        'email': 'admin@lectoplay.com',
+        'password': 'Admin1234',
+        'pin': '0000',
+        'role': 'Admin',
+      });
+    }
+
+    final tutor = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: ['tutorjohn@gmail.com'],
+    );
+
+    if (tutor.isEmpty) {
+      await db.insert('users', {
+        'username': 'John',
+        'email': 'tutorjohn@gmail.com',
+        'password': 'John1234',
+        'pin': '1234',
+        'role': 'Tutor',
+      });
+    }
   }
 
   Future<Database> _initDB(
@@ -71,6 +107,16 @@ class DatabaseHelper {
       'password': 'John1234',
       'pin': '1234',
       'role': 'Tutor',
+    });
+
+    /// ADMIN POR DEFECTO
+    await db.insert('users', {
+
+      'username': 'Admin',
+      'email': 'admin@lectoplay.com',
+      'password': 'Admin1234',
+      'pin': '0000',
+      'role': 'Admin',
     });
 
     /// 📊 TABLA DE PROGRESO OFFLINE

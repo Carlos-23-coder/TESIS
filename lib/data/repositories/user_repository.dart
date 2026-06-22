@@ -25,6 +25,20 @@ class UserRepository {
     );
   }
 
+  /// CREAR USUARIO DESDE ADMIN (tutores u otros roles permitidos)
+  Future<int> createUserFromAdmin(
+    User user,
+  ) async {
+    final db =
+        await dbHelper.database;
+
+    return await db.insert(
+      'users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   /// VERIFICAR EMAIL
   Future<bool> emailExists(
     String email,
@@ -43,6 +57,34 @@ class UserRepository {
     );
 
     return result.isNotEmpty;
+  }
+
+  /// LISTAR USUARIOS LOCALES POR ROLES
+  Future<List<User>> getUsersByRoles(
+    List<String> roles,
+  ) async {
+    if (roles.isEmpty) {
+      return [];
+    }
+
+    final db =
+        await dbHelper.database;
+
+    final placeholders =
+        List.filled(roles.length, '?').join(', ');
+
+    final result = await db.query(
+      'users',
+      where: 'role IN ($placeholders)',
+      whereArgs: roles,
+      orderBy: 'role ASC, username ASC',
+    );
+
+    return result
+        .map(
+          (item) => User.fromMap(item),
+        )
+        .toList();
   }
 
   /// LOGIN
