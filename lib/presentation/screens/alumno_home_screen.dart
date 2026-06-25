@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/progress_repository.dart';
+import '../../data/services/local_session_service.dart';
 
 import '../../games/idea_principal/idea_principal_map.dart';
 import '../../games/preguntas_rapidas/preguntas_rapidas_map.dart';
@@ -15,6 +16,7 @@ class AlumnoHomeScreen extends StatelessWidget {
 
   void _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
+    LocalSessionService.instance.clear();
 
     if (!context.mounted) return;
 
@@ -57,9 +59,12 @@ class AlumnoHomeScreen extends StatelessWidget {
             onPressed: () async {
               final progressRepo = ProgressRepository();
 
-              final User? currentUser = FirebaseAuth.instance.currentUser;
+              final currentUser = FirebaseAuth.instance.currentUser;
 
-              final String userId = currentUser?.email ?? "";
+              final String userId =
+                  currentUser?.email ??
+                  LocalSessionService.instance.email ??
+                  "";
 
               if (userId.isEmpty) {
                 return;

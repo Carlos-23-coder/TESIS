@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/reward_claim_repository.dart';
 import '../../data/repositories/tutor_repository.dart';
+import '../../data/services/local_session_service.dart';
 
 import '../tutor/tutor_reward_claims_screen.dart';
 import '../tutor/stories_admin_screen.dart';
@@ -65,6 +66,7 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
 
   void _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
+    LocalSessionService.instance.clear();
 
     if (!context.mounted) return;
 

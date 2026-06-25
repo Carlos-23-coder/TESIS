@@ -116,12 +116,21 @@ class _CreateTutorScreenState extends State<CreateTutorScreen> {
   }
 
   Widget _buildRequirement(String text, bool condition) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    Color backgroundColor;
+
+    if (condition) {
+      backgroundColor = AuthPalette.teal.withValues(alpha: 0.13);
+    } else if (isDark) {
+      backgroundColor = Colors.white.withValues(alpha: 0.08);
+    } else {
+      backgroundColor = AuthPalette.ink.withValues(alpha: 0.06);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: condition
-            ? AuthPalette.teal.withValues(alpha: 0.13)
-            : AuthPalette.ink.withValues(alpha: 0.06),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -137,10 +146,9 @@ class _CreateTutorScreenState extends State<CreateTutorScreen> {
             child: Text(
               text,
               style: const TextStyle(
-                color: AuthPalette.ink,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
-              ),
+              ).copyWith(color: isDark ? Colors.white : AuthPalette.ink),
             ),
           ),
         ],

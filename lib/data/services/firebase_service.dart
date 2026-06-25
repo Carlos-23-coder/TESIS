@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
+import 'local_session_service.dart';
 import 'tutor_resolver.dart';
 
 class FirebaseService {
@@ -140,6 +141,7 @@ class FirebaseService {
       );
 
       if (offlineResult != null) {
+        LocalSessionService.instance.setUser(offlineResult);
 
         print("✅ Login OFFLINE exitoso");
 
@@ -169,11 +171,17 @@ class FirebaseService {
         "📶 Intentando login con Firebase...",
       );
 
-      return await _loginFirebase(
+      final firebaseResult = await _loginFirebase(
         identifier: identifier,
         passwordOrPin: passwordOrPin,
         role: role,
       );
+
+      if (firebaseResult != null) {
+        LocalSessionService.instance.setUser(firebaseResult);
+      }
+
+      return firebaseResult;
 
     } catch (e) {
 
@@ -366,6 +374,7 @@ class FirebaseService {
   Future<void> logout() async {
 
     await _auth.signOut();
+    LocalSessionService.instance.clear();
   }
 
   /// 👤 USUARIO ACTUAL

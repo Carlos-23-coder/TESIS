@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'data/database/database_helper.dart';
 import 'data/services/sync_service.dart';
@@ -78,19 +77,10 @@ class LectoPlayApp extends StatelessWidget {
             ),
           ),
 
-          themeMode:
-              FirebaseAuth.instance.currentUser != null &&
-                  accessibility.darkMode
-              ? ThemeMode.dark
-              : ThemeMode.light,
+          themeMode: accessibility.darkMode ? ThemeMode.dark : ThemeMode.light,
 
           builder: (context, child) {
-            final currentUser = FirebaseAuth.instance.currentUser;
             final content = child ?? const SizedBox();
-
-            if (currentUser == null) {
-              return content;
-            }
 
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(

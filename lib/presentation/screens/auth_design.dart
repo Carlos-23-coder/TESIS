@@ -17,11 +17,23 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFEAF8FF), Color(0xFFEAFBF6), Color(0xFFFFF3CC)],
+            colors: isDark
+                ? const [
+                    Color(0xFF0F172A),
+                    Color(0xFF111827),
+                    Color(0xFF1E293B),
+                  ]
+                : const [
+                    Color(0xFFEAF8FF),
+                    Color(0xFFEAFBF6),
+                    Color(0xFFFFF3CC),
+                  ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -49,15 +61,22 @@ class AuthPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AuthPalette.surface,
+        color: isDark ? const Color(0xFF1F2937) : AuthPalette.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF374151) : Colors.white,
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AuthPalette.blue.withValues(alpha: 0.12),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.28)
+                : AuthPalette.blue.withValues(alpha: 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -82,6 +101,12 @@ class AuthLogoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : AuthPalette.ink;
+    final subtitleColor = isDark
+        ? Colors.white.withValues(alpha: 0.72)
+        : AuthPalette.ink.withValues(alpha: 0.72);
+
     return Column(
       children: [
         Stack(
@@ -116,8 +141,8 @@ class AuthLogoHeader extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AuthPalette.ink,
+          style: TextStyle(
+            color: titleColor,
             fontSize: 30,
             fontWeight: FontWeight.w800,
             letterSpacing: 0,
@@ -128,7 +153,7 @@ class AuthLogoHeader extends StatelessWidget {
           subtitle,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AuthPalette.ink.withValues(alpha: 0.72),
+            color: subtitleColor,
             fontSize: 16,
             height: 1.35,
           ),

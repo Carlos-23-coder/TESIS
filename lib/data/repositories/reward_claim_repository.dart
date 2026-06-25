@@ -27,6 +27,66 @@ class RewardClaimRepository {
         );
   }
 
+  Future<List<RewardClaimModel>> getStudentClaims(
+    String studentEmail,
+  ) async {
+    final normalizedEmail =
+        studentEmail.trim().toLowerCase();
+
+    final localClaims =
+        await _getStudentClaimsOffline(normalizedEmail);
+
+    try {
+      final snapshot = await _firestore
+          .collection('reward_claims')
+          .where('studentEmail', isEqualTo: normalizedEmail)
+          .get();
+
+      final remoteClaims = snapshot.docs
+          .map(
+            (doc) => RewardClaimModel.fromMap(doc.data()),
+          )
+          .toList();
+
+      return _mergeClaims([
+        ...localClaims,
+        ...remoteClaims,
+      ]);
+    } catch (_) {
+      return localClaims;
+    }
+  }
+
+  Future<List<RewardClaimModel>> _getStudentClaimsOffline(
+    String studentEmail,
+  ) async {
+    final db = await _dbHelper.database;
+
+    final results = await db.query(
+      'reward_claims',
+      where: 'LOWER(studentEmail) = ?',
+      whereArgs: [studentEmail],
+    );
+
+    return results
+        .map(
+          (row) => RewardClaimModel.fromMap(row),
+        )
+        .toList();
+  }
+
+  List<RewardClaimModel> _mergeClaims(
+    List<RewardClaimModel> claims,
+  ) {
+    final byId = <String, RewardClaimModel>{};
+
+    for (final claim in claims) {
+      byId[claim.id] = claim;
+    }
+
+    return byId.values.toList();
+  }
+
   Stream<List<RewardClaimModel>> watchPendingClaimsForTutor(
     String tutorEmail,
   ) {

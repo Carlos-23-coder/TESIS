@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../data/database/database_helper.dart';
+import '../../data/services/local_session_service.dart';
 
 class AccessibilityController extends ChangeNotifier {
   AccessibilityController._();
@@ -15,6 +16,7 @@ class AccessibilityController extends ChangeNotifier {
 
   final AudioPlayer _musicPlayer = AudioPlayer();
   StreamSubscription<User?>? _authSubscription;
+  VoidCallback? _sessionListener;
 
   bool _darkMode = false;
   double _fontScale = 1;
@@ -49,10 +51,20 @@ class AccessibilityController extends ChangeNotifier {
         activateForUser(user);
       });
 
+      _sessionListener ??= () {
+        activateForLocalSession();
+      };
+
+      LocalSessionService.instance.addListener(_sessionListener!);
+
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_musicVolume);
 
       await activateForUser(FirebaseAuth.instance.currentUser);
+
+      if (FirebaseAuth.instance.currentUser == null) {
+        await activateForLocalSession();
+      }
     } catch (e) {
       debugPrint('No se pudo inicializar accesibilidad: $e');
     } finally {
@@ -87,7 +99,24 @@ class AccessibilityController extends ChangeNotifier {
   }
 
   Future<void> activateForUser(User? user) async {
-    final nextScope = user?.email?.trim().toLowerCase();
+    if (user == null && LocalSessionService.instance.hasUser) {
+      await activateForLocalSession();
+      return;
+    }
+
+    await _activateForScope(user?.email);
+  }
+
+  Future<void> activateForLocalSession() async {
+    if (FirebaseAuth.instance.currentUser != null) {
+      return;
+    }
+
+    await _activateForScope(LocalSessionService.instance.email);
+  }
+
+  Future<void> _activateForScope(String? scope) async {
+    final nextScope = scope?.trim().toLowerCase();
 
     if (nextScope == _scopeKey && _initialized) {
       return;

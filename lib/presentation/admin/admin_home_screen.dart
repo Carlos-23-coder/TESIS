@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/user_model.dart' as app_user;
 import '../../data/repositories/user_repository.dart';
+import '../../data/services/local_session_service.dart';
 import 'create_tutor_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -53,6 +54,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
+    LocalSessionService.instance.clear();
 
     if (!mounted) return;
 

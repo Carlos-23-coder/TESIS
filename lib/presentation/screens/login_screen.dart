@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/services/firebase_service.dart';
+import '../../data/services/local_session_service.dart';
 import 'auth_design.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() async {
     await FirebaseAuth.instance.signOut();
+    LocalSessionService.instance.clear();
 
     debugPrint(
       'Firebase despues de signOut: '
