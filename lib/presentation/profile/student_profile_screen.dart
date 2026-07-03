@@ -33,6 +33,30 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
   final user = FirebaseAuth.instance.currentUser;
 
+  ImageProvider? get profileImageProvider {
+    if (localImage != null) {
+      return FileImage(localImage!);
+    }
+
+    final path = photoUrl?.trim() ?? '';
+
+    if (path.isEmpty) {
+      return null;
+    }
+
+    if (path.startsWith('http')) {
+      return NetworkImage(path);
+    }
+
+    final file = File(path);
+
+    if (file.existsSync()) {
+      return FileImage(file);
+    }
+
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -200,13 +224,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     ? const Color(0xFF1F2937)
                     : Colors.white,
 
-                backgroundImage: localImage != null
-                    ? FileImage(localImage!)
-                    : photoUrl != null
-                    ? NetworkImage(photoUrl!)
-                    : null,
+                backgroundImage: profileImageProvider,
 
-                child: localImage == null && photoUrl == null
+                child: profileImageProvider == null
                     ? const Icon(Icons.person, size: 70, color: Colors.blue)
                     : null,
               ),

@@ -34,6 +34,16 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
     loadStudents();
   }
 
+  File? _existingPhotoFile(String? path) {
+    if (path == null || path.trim().isEmpty || path.startsWith('http')) {
+      return null;
+    }
+
+    final file = File(path);
+
+    return file.existsSync() ? file : null;
+  }
+
   /// 👨‍🎓 CARGAR ALUMNOS
   Future<void> loadStudents() async {
     final snapshot = await _firestore
@@ -361,24 +371,30 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
                           contentPadding: const EdgeInsets.all(16),
 
                           /// 👤 FOTO
-                          leading: CircleAvatar(
-                            radius: 30,
+                          leading: Builder(
+                            builder: (context) {
+                              final photoFile = _existingPhotoFile(
+                                student["photoUrl"]?.toString(),
+                              );
 
-                            backgroundColor: Colors.blue.shade100,
+                              return CircleAvatar(
+                                radius: 30,
 
-                            backgroundImage:
-                                student["photoUrl"] != null &&
-                                    student["photoUrl"].toString().isNotEmpty
-                                ? FileImage(File(student["photoUrl"]))
-                                : null,
+                                backgroundColor: Colors.blue.shade100,
 
-                            child: student["photoUrl"] == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 30,
-                                    color: Colors.blue,
-                                  )
-                                : null,
+                                backgroundImage: photoFile != null
+                                    ? FileImage(photoFile)
+                                    : null,
+
+                                child: photoFile == null
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: Colors.blue,
+                                      )
+                                    : null,
+                              );
+                            },
                           ),
 
                           /// 👨‍🎓 NOMBRE

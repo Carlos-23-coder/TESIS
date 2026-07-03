@@ -34,6 +34,16 @@ class _StudentProgressScreenState
 
   bool isLoading = true;
 
+  File? _existingPhotoFile(String? path) {
+    if (path == null || path.trim().isEmpty || path.startsWith('http')) {
+      return null;
+    }
+
+    final file = File(path);
+
+    return file.existsSync() ? file : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,11 +80,13 @@ class _StudentProgressScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
 
       backgroundColor:
-          const Color(0xFFEAF6FF),
+          theme.scaffoldBackgroundColor,
 
       appBar: AppBar(
         title: Text(
@@ -99,36 +111,32 @@ class _StudentProgressScreenState
                 children: [
 
                   /// 👤 FOTO
-                  CircleAvatar(
+                  Builder(
+                    builder: (context) {
+                      final photoFile = _existingPhotoFile(
+                        widget.student["photoUrl"]?.toString(),
+                      );
 
-                    radius: 60,
+                      return CircleAvatar(
+                        radius: 60,
 
-                    backgroundColor:
-                        Colors.white,
+                        backgroundColor: isDark
+                            ? const Color(0xFF1F2937)
+                            : Colors.white,
 
-                    backgroundImage:
-                      widget.student["photoUrl"] != null &&
-                              widget.student["photoUrl"]
-                                  .toString()
-                                  .isNotEmpty
-                          ? FileImage(
-                              File(
-                                widget.student["photoUrl"],
-                              ),
-                            )
-                          : null,
+                        backgroundImage: photoFile != null
+                            ? FileImage(photoFile)
+                            : null,
 
-                    child:
-                        widget.student[
-                                    "photoUrl"] ==
-                                null
+                        child: photoFile == null
                             ? const Icon(
                                 Icons.person,
                                 size: 60,
-                                color:
-                                    Colors.blue,
+                                color: Colors.blue,
                               )
                             : null,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -140,7 +148,7 @@ class _StudentProgressScreenState
                             "username"] ??
                         "Alumno",
 
-                    style: const TextStyle(
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontSize: 28,
                       fontWeight:
                           FontWeight.bold,
@@ -153,9 +161,11 @@ class _StudentProgressScreenState
                     widget.student[
                             "email"] ??
                         "",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey,
+                      color: isDark
+                          ? Colors.white70
+                          : Colors.grey,
                     ),
                   ),
 
@@ -216,7 +226,7 @@ class _StudentProgressScreenState
                   const SizedBox(height: 30),
 
                   /// 📚 PROGRESO
-                  const Align(
+                  Align(
 
                     alignment:
                         Alignment.centerLeft,
@@ -225,7 +235,7 @@ class _StudentProgressScreenState
 
                       "Progreso",
 
-                      style: TextStyle(
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontSize: 24,
                         fontWeight:
                             FontWeight.bold,
