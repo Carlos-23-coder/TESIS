@@ -20,6 +20,8 @@ El proyecto esta orientado a estudiantes con dificultades de lectura, baja motiv
 - Panel del tutor con estadisticas, ranking y progreso.
 - Personalizacion de historias y preguntas.
 - Accesibilidad: modo oscuro, tamano de letra, musica de fondo y volumen.
+- Alto contraste y escalado de texto hasta 200%.
+- Usabilidad y accesibilidad documentadas con WCAG 2.2 AA, ISO 9241-11:2018 e ISO/IEC 25010:2011.
 - Funcionamiento hibrido online/offline con SQLite y Firebase.
 
 ## Roles del sistema
@@ -117,6 +119,12 @@ En modo offline:
 - Guarda datos pendientes para sincronizarlos cuando vuelva la conexion.
 
 Nota: las imagenes guardadas como rutas locales solo existen en el dispositivo donde fueron creadas. Para que una foto se vea en todos los celulares, debe subirse a Firebase Storage y guardarse una URL publica o de descarga en Firestore.
+
+## Accesibilidad y usabilidad
+
+LectoPlay toma como referencia WCAG 2.2 nivel AA para accesibilidad, ISO 9241-11:2018 para usabilidad e ISO/IEC 25010:2011 como apoyo de calidad de software. La app implementa modo oscuro, alto contraste, escalado de texto hasta 200%, controles tactiles amplios, retroalimentacion inmediata, narrador de texto y preferencias persistidas por usuario.
+
+La justificacion tecnica esta documentada en `docs/accesibilidad_usabilidad.md`.
 
 ## Estructura del proyecto
 

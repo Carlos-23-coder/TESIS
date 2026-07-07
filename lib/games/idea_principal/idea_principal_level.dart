@@ -236,21 +236,29 @@ class _IdeaPrincipalLevelState extends State<IdeaPrincipalLevel> {
             for (int i = 0; i < shuffledOptions.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 15),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 65,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: getButtonColor(i, shuffledCorrectAnswer),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 65),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: getButtonColor(
+                          i,
+                          shuffledCorrectAnswer,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
                       ),
-                    ),
-                    onPressed: () => checkAnswer(i),
-                    child: Text(
-                      shuffledOptions[i],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                      onPressed: () => checkAnswer(i),
+                      child: Text(
+                        shuffledOptions[i],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),

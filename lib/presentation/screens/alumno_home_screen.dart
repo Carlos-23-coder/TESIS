@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/progress_repository.dart';
 import '../../data/services/local_session_service.dart';
+import '../../core/accessibility/accessibility_controller.dart';
 
 import '../../games/idea_principal/idea_principal_map.dart';
 import '../../games/preguntas_rapidas/preguntas_rapidas_map.dart';
@@ -27,7 +28,14 @@ class AlumnoHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final headerColor = isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent;
+    final highContrast = AccessibilityController.instance.highContrast;
+    final headerColor = highContrast
+        ? (isDark ? const Color(0xFFFFD600) : Colors.black)
+        : (isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent);
+    final headerTextColor = highContrast && isDark ? Colors.black : Colors.white;
+    final headerSubtextColor = highContrast && isDark
+        ? Colors.black87
+        : Colors.white70;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -134,13 +142,13 @@ class AlumnoHomeScreen extends StatelessWidget {
               ),
             ),
 
-            child: const Column(
+            child: Column(
               children: [
                 Text(
                   "¡Aprendamos jugando!",
 
                   style: TextStyle(
-                    color: Colors.white,
+                    color: headerTextColor,
 
                     fontSize: 26,
 
@@ -153,7 +161,7 @@ class AlumnoHomeScreen extends StatelessWidget {
                 Text(
                   "Completa niveles y gana estrellas ⭐",
 
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: headerSubtextColor),
                 ),
               ],
             ),
@@ -191,6 +199,7 @@ class AlumnoHomeScreen extends StatelessWidget {
   Widget _gameCard(BuildContext context, IconData icon, String title) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final highContrast = AccessibilityController.instance.highContrast;
 
     return GestureDetector(
       onTap: () {
@@ -217,15 +226,26 @@ class AlumnoHomeScreen extends StatelessWidget {
 
       child: Container(
         decoration: BoxDecoration(
-          color: theme.cardColor,
+          color: highContrast
+              ? (isDark ? Colors.black : Colors.white)
+              : theme.cardColor,
 
           borderRadius: BorderRadius.circular(22),
 
-          boxShadow: const [
+          border: highContrast
+              ? Border.all(
+                  color: isDark ? Colors.white : Colors.black,
+                  width: 2,
+                )
+              : null,
+
+          boxShadow: [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+              color: highContrast
+                  ? (isDark ? Colors.white38 : Colors.black38)
+                  : Colors.black12,
+              blurRadius: highContrast ? 10 : 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -238,14 +258,22 @@ class AlumnoHomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(15),
 
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.blueAccent.withValues(alpha: 0.18)
-                    : Colors.blue.shade50,
+                color: highContrast
+                    ? (isDark ? const Color(0xFFFFD600) : Colors.black)
+                    : (isDark
+                          ? Colors.blueAccent.withValues(alpha: 0.18)
+                          : Colors.blue.shade50),
 
                 borderRadius: BorderRadius.circular(18),
               ),
 
-              child: Icon(icon, size: 40, color: Colors.blueAccent),
+              child: Icon(
+                icon,
+                size: 40,
+                color: highContrast
+                    ? (isDark ? Colors.black : Colors.white)
+                    : Colors.blueAccent,
+              ),
             ),
 
             const SizedBox(height: 12),

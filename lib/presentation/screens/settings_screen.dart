@@ -38,6 +38,58 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Card(
+                child: SwitchListTile(
+                  secondary: const Icon(Icons.contrast),
+                  title: const Text('Alto contraste'),
+                  subtitle: const Text(
+                    'Mejora la diferencia entre texto, fondo y controles.',
+                  ),
+                  value: accessibility.highContrast,
+                  onChanged: accessibility.setHighContrast,
+                ),
+              ),
+              if (accessibility.highContrast) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.brightness == Brightness.dark
+                        ? const Color(0xFFFFD600)
+                        : Colors.black,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFFFFD600),
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.visibility,
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.black
+                            : Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Alto contraste activo',
+                          style: TextStyle(
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.black
+                                : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -51,11 +103,13 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       Slider(
                         min: 0.9,
-                        max: 1.4,
-                        divisions: 5,
+                        max: 2.0,
+                        divisions: 11,
                         label: '${(accessibility.fontScale * 100).round()}%',
                         value: accessibility.fontScale,
                         onChanged: accessibility.setFontScale,
+                        semanticFormatterCallback: (value) =>
+                            'Tamano de letra ${(value * 100).round()} por ciento',
                       ),
                     ],
                   ),
@@ -99,6 +153,16 @@ class SettingsScreen extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: const ListTile(
+                  leading: Icon(Icons.verified_user),
+                  title: Text('Normas aplicadas'),
+                  subtitle: Text(
+                    'WCAG 2.2 AA para accesibilidad e ISO 9241-11:2018 para usabilidad.',
                   ),
                 ),
               ),

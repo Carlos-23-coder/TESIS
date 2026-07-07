@@ -604,31 +604,36 @@ class _PreguntasRapidasLevelState extends State<PreguntasRapidasLevel> {
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 15),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 65,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: getButtonColor(index, correctAnswer),
-                          disabledBackgroundColor: getButtonColor(
-                            index,
-                            correctAnswer,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 65),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: getButtonColor(
+                              index,
+                              correctAnswer,
+                            ),
+                            disabledBackgroundColor: getButtonColor(
+                              index,
+                              correctAnswer,
+                            ),
+                            disabledForegroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
                           ),
-                          disabledForegroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        onPressed: answered
-                            ? null
-                            : () => answerQuestion(index),
-                        child: Text(
-                          shuffledOptions[index],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          onPressed: answered
+                              ? null
+                              : () => answerQuestion(index),
+                          child: Text(
+                            shuffledOptions[index],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

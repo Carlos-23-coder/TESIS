@@ -19,6 +19,7 @@ class AccessibilityController extends ChangeNotifier {
   VoidCallback? _sessionListener;
 
   bool _darkMode = false;
+  bool _highContrast = false;
   double _fontScale = 1;
   bool _musicEnabled = false;
   double _musicVolume = 0.45;
@@ -27,6 +28,7 @@ class AccessibilityController extends ChangeNotifier {
   bool _initialized = false;
 
   bool get darkMode => _darkMode;
+  bool get highContrast => _highContrast;
   double get fontScale => _fontScale;
   bool get musicEnabled => _musicEnabled;
   double get musicVolume => _musicVolume;
@@ -78,8 +80,14 @@ class AccessibilityController extends ChangeNotifier {
     await _saveSetting('darkMode', value ? '1' : '0');
   }
 
+  Future<void> setHighContrast(bool value) async {
+    _highContrast = value;
+    notifyListeners();
+    await _saveSetting('highContrast', value ? '1' : '0');
+  }
+
   Future<void> setFontScale(double value) async {
-    _fontScale = value.clamp(0.9, 1.4);
+    _fontScale = value.clamp(0.9, 2.0);
     notifyListeners();
     await _saveSetting('fontScale', _fontScale.toString());
   }
@@ -158,9 +166,10 @@ class AccessibilityController extends ChangeNotifier {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query(
       'app_settings',
-      where: 'key IN (?, ?, ?, ?)',
+      where: 'key IN (?, ?, ?, ?, ?)',
       whereArgs: [
         _settingKey('darkMode'),
+        _settingKey('highContrast'),
         _settingKey('fontScale'),
         _settingKey('musicEnabled'),
         _settingKey('musicVolume'),
@@ -171,6 +180,7 @@ class AccessibilityController extends ChangeNotifier {
     };
 
     _darkMode = settings[_settingKey('darkMode')] == '1';
+    _highContrast = settings[_settingKey('highContrast')] == '1';
     _fontScale = double.tryParse(settings[_settingKey('fontScale')] ?? '') ?? 1;
     _musicEnabled = settings[_settingKey('musicEnabled')] == '1';
     _musicVolume =
@@ -194,6 +204,7 @@ class AccessibilityController extends ChangeNotifier {
 
   void _resetToDefaults() {
     _darkMode = false;
+    _highContrast = false;
     _fontScale = 1;
     _musicEnabled = false;
     _musicVolume = 0.45;

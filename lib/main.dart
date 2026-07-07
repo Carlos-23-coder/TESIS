@@ -49,6 +49,52 @@ class LectoPlayApp extends StatelessWidget {
       animation: accessibility,
 
       builder: (context, _) {
+        final highContrast = accessibility.highContrast;
+        final lightScheme = accessibility.highContrast
+            ? const ColorScheme.highContrastLight(
+                primary: Color(0xFF001B5E),
+                onPrimary: Colors.white,
+                secondary: Color(0xFF004D40),
+                onSecondary: Colors.white,
+                surface: Colors.white,
+                onSurface: Colors.black,
+                error: Color(0xFFB00020),
+                onError: Colors.white,
+              )
+            : ColorScheme.fromSeed(
+                seedColor: Colors.blueAccent,
+                brightness: Brightness.light,
+              );
+        final darkScheme = accessibility.highContrast
+            ? const ColorScheme.highContrastDark(
+                primary: Color(0xFFFFD600),
+                onPrimary: Colors.black,
+                secondary: Color(0xFF00E5FF),
+                onSecondary: Colors.black,
+                surface: Colors.black,
+                onSurface: Colors.white,
+                error: Color(0xFFFF8A80),
+                onError: Colors.black,
+              )
+            : ColorScheme.fromSeed(
+                seedColor: Colors.blueAccent,
+                brightness: Brightness.dark,
+              );
+        final lightCardShape = RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: highContrast ? Colors.black : Colors.transparent,
+            width: highContrast ? 2 : 0,
+          ),
+        );
+        final darkCardShape = RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: highContrast ? Colors.white : Colors.transparent,
+            width: highContrast ? 2 : 0,
+          ),
+        );
+
         return MaterialApp(
           debugShowCheckedModeBanner: false,
 
@@ -56,24 +102,102 @@ class LectoPlayApp extends StatelessWidget {
 
           theme: ThemeData(
             primarySwatch: Colors.blue,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blueAccent,
-              brightness: Brightness.light,
+            colorScheme: lightScheme,
+            scaffoldBackgroundColor: accessibility.highContrast
+                ? const Color(0xFFF7F7F7)
+                : const Color(0xFFEAF6FF),
+            appBarTheme: AppBarTheme(
+              backgroundColor: highContrast
+                  ? Colors.black
+                  : const Color(0xFF1D4ED8),
+              foregroundColor: Colors.white,
+              elevation: highContrast ? 4 : 0,
             ),
-            scaffoldBackgroundColor: const Color(0xFFEAF6FF),
-            cardTheme: const CardThemeData(color: Colors.white),
+            cardTheme: CardThemeData(
+              color: Colors.white,
+              elevation: highContrast ? 6 : null,
+              shadowColor: highContrast ? Colors.black54 : null,
+              surfaceTintColor: Colors.transparent,
+              shape: lightCardShape,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: highContrast
+                    ? Colors.black
+                    : lightScheme.primary,
+                foregroundColor: Colors.white,
+                side: highContrast
+                    ? const BorderSide(color: Color(0xFFFFD600), width: 2)
+                    : BorderSide.none,
+              ),
+            ),
+            sliderTheme: SliderThemeData(
+              activeTrackColor: highContrast ? Colors.black : null,
+              inactiveTrackColor: highContrast ? Colors.black26 : null,
+              thumbColor: highContrast ? const Color(0xFFFFD600) : null,
+              valueIndicatorColor: highContrast ? Colors.black : null,
+              valueIndicatorTextStyle: highContrast
+                  ? const TextStyle(color: Colors.white)
+                  : null,
+            ),
+            switchTheme: SwitchThemeData(
+              thumbColor: highContrast
+                  ? const WidgetStatePropertyAll(Color(0xFFFFD600))
+                  : null,
+              trackColor: highContrast
+                  ? const WidgetStatePropertyAll(Colors.black)
+                  : null,
+            ),
           ),
 
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blueAccent,
-              brightness: Brightness.dark,
+            colorScheme: darkScheme,
+            scaffoldBackgroundColor: accessibility.highContrast
+                ? Colors.black
+                : const Color(0xFF111827),
+            cardTheme: CardThemeData(
+              color: accessibility.highContrast
+                  ? Colors.black
+                  : const Color(0xFF1F2937),
+              elevation: highContrast ? 6 : null,
+              shadowColor: highContrast ? Colors.white54 : null,
+              surfaceTintColor: Colors.transparent,
+              shape: darkCardShape,
             ),
-            scaffoldBackgroundColor: const Color(0xFF111827),
-            cardTheme: const CardThemeData(color: Color(0xFF1F2937)),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF1D4ED8),
-              foregroundColor: Colors.white,
+            appBarTheme: AppBarTheme(
+              backgroundColor: highContrast
+                  ? const Color(0xFFFFD600)
+                  : const Color(0xFF1D4ED8),
+              foregroundColor: highContrast ? Colors.black : Colors.white,
+              elevation: highContrast ? 4 : 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: highContrast
+                    ? const Color(0xFFFFD600)
+                    : darkScheme.primary,
+                foregroundColor: highContrast ? Colors.black : Colors.white,
+                side: highContrast
+                    ? const BorderSide(color: Colors.white, width: 2)
+                    : BorderSide.none,
+              ),
+            ),
+            sliderTheme: SliderThemeData(
+              activeTrackColor: highContrast ? const Color(0xFFFFD600) : null,
+              inactiveTrackColor: highContrast ? Colors.white38 : null,
+              thumbColor: highContrast ? Colors.white : null,
+              valueIndicatorColor: highContrast ? const Color(0xFFFFD600) : null,
+              valueIndicatorTextStyle: highContrast
+                  ? const TextStyle(color: Colors.black)
+                  : null,
+            ),
+            switchTheme: SwitchThemeData(
+              thumbColor: highContrast
+                  ? const WidgetStatePropertyAll(Colors.black)
+                  : null,
+              trackColor: highContrast
+                  ? const WidgetStatePropertyAll(Color(0xFFFFD600))
+                  : null,
             ),
           ),
 
