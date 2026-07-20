@@ -20,43 +20,7 @@ class DatabaseHelper {
     _database =
         await _initDB('lectoplay.db');
 
-    await _ensureDefaultUsers(_database!);
-
     return _database!;
-  }
-
-  Future<void> _ensureDefaultUsers(Database db) async {
-    final admin = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: ['admin@lectoplay.com'],
-    );
-
-    if (admin.isEmpty) {
-      await db.insert('users', {
-        'username': 'Admin',
-        'email': 'admin@lectoplay.com',
-        'password': 'Admin1234',
-        'pin': '0000',
-        'role': 'Admin',
-      });
-    }
-
-    final tutor = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: ['tutorjohn@gmail.com'],
-    );
-
-    if (tutor.isEmpty) {
-      await db.insert('users', {
-        'username': 'John',
-        'email': 'tutorjohn@gmail.com',
-        'password': 'John1234',
-        'pin': '1234',
-        'role': 'Tutor',
-      });
-    }
   }
 
   Future<Database> _initDB(
@@ -73,7 +37,7 @@ class DatabaseHelper {
 
       path,
 
-      version: 6,
+      version: 4,
 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
@@ -102,21 +66,11 @@ class DatabaseHelper {
     /// TUTOR POR DEFECTO
     await db.insert('users', {
 
-      'username': 'John',
-      'email': 'tutorjohn@gmail.com',
-      'password': 'John1234',
+      'username': 'tutor',
+      'email': 'tutor@lectoplay.com',
+      'password': '12345678',
       'pin': '1234',
       'role': 'Tutor',
-    });
-
-    /// ADMIN POR DEFECTO
-    await db.insert('users', {
-
-      'username': 'Admin',
-      'email': 'admin@lectoplay.com',
-      'password': 'Admin1234',
-      'pin': '0000',
-      'role': 'Admin',
     });
 
     /// 📊 TABLA DE PROGRESO OFFLINE
@@ -164,50 +118,6 @@ class DatabaseHelper {
         imageUrl TEXT,
         date TEXT,
         synced INTEGER DEFAULT 0
-      )
-
-    ''');
-
-    /// 📚 TABLA DE HISTORIAS PERSONALIZADAS POR TUTOR
-    await db.execute('''
-
-      CREATE TABLE story_overrides (
-
-        id TEXT PRIMARY KEY,
-        tutorEmail TEXT NOT NULL,
-        game TEXT NOT NULL,
-        level INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        story TEXT NOT NULL,
-        imagePath TEXT,
-        imageUrl TEXT,
-        question TEXT,
-        optionsJson TEXT,
-        correctAnswer INTEGER,
-        questionsJson TEXT,
-        isNewLevel INTEGER DEFAULT 0,
-        date TEXT NOT NULL,
-        synced INTEGER DEFAULT 0,
-        UNIQUE(tutorEmail, game, level)
-      )
-
-    ''');
-
-    /// 🔔 TABLA DE SOLICITUDES DE RECOMPENSAS
-    await db.execute('''
-
-      CREATE TABLE reward_claims (
-
-        id TEXT PRIMARY KEY,
-        studentEmail TEXT NOT NULL,
-        studentName TEXT NOT NULL,
-        rewardId TEXT NOT NULL,
-        rewardName TEXT NOT NULL,
-        tutorEmail TEXT NOT NULL,
-        status TEXT NOT NULL,
-        date TEXT NOT NULL,
-        synced INTEGER DEFAULT 0,
-        UNIQUE(studentEmail, rewardId)
       )
 
     ''');
@@ -328,61 +238,6 @@ class DatabaseHelper {
     } catch (e) {
       print(
         "Error en migración progress: $e",
-      );
-    }
-
-    /// CREAR TABLA DE HISTORIAS PERSONALIZADAS
-    try {
-      await db.execute('''
-
-        CREATE TABLE IF NOT EXISTS story_overrides (
-
-          id TEXT PRIMARY KEY,
-          tutorEmail TEXT NOT NULL,
-          game TEXT NOT NULL,
-          level INTEGER NOT NULL,
-          title TEXT NOT NULL,
-          story TEXT NOT NULL,
-          imagePath TEXT,
-          imageUrl TEXT,
-          question TEXT,
-          optionsJson TEXT,
-          correctAnswer INTEGER,
-          questionsJson TEXT,
-          isNewLevel INTEGER DEFAULT 0,
-          date TEXT NOT NULL,
-          synced INTEGER DEFAULT 0,
-          UNIQUE(tutorEmail, game, level)
-        )
-
-      ''');
-    } catch (e) {
-      print(
-        "Tabla story_overrides ya existe: $e",
-      );
-    }
-
-    try {
-      await db.execute('''
-
-        CREATE TABLE IF NOT EXISTS reward_claims (
-
-          id TEXT PRIMARY KEY,
-          studentEmail TEXT NOT NULL,
-          studentName TEXT NOT NULL,
-          rewardId TEXT NOT NULL,
-          rewardName TEXT NOT NULL,
-          tutorEmail TEXT NOT NULL,
-          status TEXT NOT NULL,
-          date TEXT NOT NULL,
-          synced INTEGER DEFAULT 0,
-          UNIQUE(studentEmail, rewardId)
-        )
-
-      ''');
-    } catch (e) {
-      print(
-        "Tabla reward_claims ya existe: $e",
       );
     }
   }

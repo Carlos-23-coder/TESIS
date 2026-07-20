@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/rapid_question_model.dart';
-import '../services/local_image_service.dart';
 
 class RapidQuestionsRepository {
 
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
+
+  final FirebaseStorage _storage =
+      FirebaseStorage.instance;
 
   final DatabaseHelper _dbHelper =
       DatabaseHelper.instance;
@@ -335,18 +338,30 @@ class RapidQuestionsRepository {
     return lvl != null;
   }
 
-  /// 📤 GUARDAR IMAGEN LOCALMENTE
-  Future<String> saveImageLocally(
+  /// 📤 SUBIR IMAGEN
+  Future<String> uploadImage(
     int level,
     File image,
   ) async {
+
     try {
-      return await LocalImageService.saveRapidQuestionImage(
-        level: level,
-        image: image,
-      );
+
+      final ref = _storage
+          .ref()
+          .child(
+            "rapid_questions/level_$level.jpg",
+          );
+
+      await ref.putFile(image);
+
+      return await ref.getDownloadURL();
+
     } catch (e) {
-      print("ERROR GUARDAR IMAGEN: $e");
+
+      print(
+        "ERROR SUBIR IMAGEN: $e",
+      );
+
       return "";
     }
   }

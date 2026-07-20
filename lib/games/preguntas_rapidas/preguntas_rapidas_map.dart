@@ -1,99 +1,137 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../core/game_engine/game_progress.dart';
-import '../../../data/models/story_override_model.dart';
-import '../../../data/repositories/progress_repository.dart';
-import '../../../data/repositories/story_repository.dart';
-import '../../../data/services/tutor_resolver.dart';
+import '../../core/game_engine/game_progress.dart';
+import '../../data/repositories/progress_repository.dart';
 
+import '../../../data/models/rapid_question_model.dart';
+import '../../../data/repositories/rapid_questions_repository.dart';
 import 'preguntas_rapidas_level.dart';
 
-class PreguntasRapidasMap extends StatefulWidget {
-  const PreguntasRapidasMap({super.key});
+class PreguntasRapidasMap
+    extends StatefulWidget {
+
+  const PreguntasRapidasMap({
+    super.key,
+  });
 
   @override
-  State<PreguntasRapidasMap> createState() => _PreguntasRapidasMapState();
+  State<PreguntasRapidasMap>
+      createState() =>
+          _PreguntasRapidasMapState();
 }
 
-class _PreguntasRapidasMapState extends State<PreguntasRapidasMap> {
-  final ProgressRepository _progressRepository = ProgressRepository();
+class _PreguntasRapidasMapState
+    extends State<PreguntasRapidasMap> {
 
-  final StoryRepository _storyRepository = StoryRepository();
+  /// 📚 REPOSITORIO DE PREGUNTAS
+  final RapidQuestionsRepository
+      _questionsRepository =
+          RapidQuestionsRepository();
 
-  final user = FirebaseAuth.instance.currentUser;
+  /// 🔥 REPOSITORIO DE PROGRESO
+  final ProgressRepository
+      _progressRepository =
+          ProgressRepository();
 
+  /// 👤 USUARIO ACTUAL
+  final user =
+      FirebaseAuth.instance.currentUser;
+
+  /// 📚 NIVELES
+  List<RapidQuestionModel>
+      levels = [];
+
+  /// ⭐ ESTRELLAS
   Map<int, int> starsMap = {};
-  List<int> availableLevels = [];
+
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
+
     loadLevelsAndProgress();
   }
 
-  Future<void> loadLevelsAndProgress() async {
+  /// 📚 CARGAR NIVELES Y PROGRESO
+  Future<void>
+      loadLevelsAndProgress() async {
+
+    /// CARGAR NIVELES
+    levels = await _questionsRepository
+        .getAllLevels();
+
+    /// CARGAR PROGRESO
     if (user != null) {
-      await TutorResolver.ensureStudentLinkedToTutor(user!.email!);
-    }
 
-    final tutorEmail = await TutorResolver.resolveTutorEmail();
-
-    final levels = await _storyRepository.listLevels(
-      tutorEmail: tutorEmail,
-      game: StoryGameType.preguntasRapidas,
-    );
-
-    if (user != null) {
-      final progress = await _progressRepository.getStudentProgress(
+      final progress =
+          await _progressRepository
+              .getStudentProgress(
         user!.email!,
       );
 
-      GameProgress.clearGame('preguntas_rapidas');
-
-      final loadedStars = <int, int>{};
+      Map<int, int> loadedStars = {};
 
       for (var item in progress) {
-        if (item['game'] != 'preguntas_rapidas') continue;
 
-        final int level = item['level'] ?? 1;
-        final int stars = ((item['stars'] ?? 0) as int).clamp(0, 3);
-        final levelIndex = level - 1;
-        final current = loadedStars[levelIndex] ?? 0;
+        final int level =
+            item["level"] ?? 1;
 
-        if (stars > current) {
-          loadedStars[levelIndex] = stars;
-          GameProgress.saveStars('preguntas_rapidas', levelIndex, stars);
-        }
+        final int stars =
+            item["stars"] ?? 0;
+
+        /// ⭐ GUARDAR EN MAPA
+        loadedStars[level - 1] = stars;
+
+        /// 💾 GUARDAR LOCAL
+        GameProgress.saveStars(
+          level - 1,
+          stars,
+        );
       }
 
-      starsMap = loadedStars;
+      setState(() {
+        starsMap = loadedStars;
+      });
     }
 
-    if (!mounted) return;
-
     setState(() {
-      availableLevels = levels.map((item) => item.level).toList();
       loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(title: const Text('Preguntas Rápidas'), centerTitle: true),
+
+      backgroundColor:
+          const Color(0xFFEAF6FF),
+
+      appBar: AppBar(
+        title: const Text(
+          "Preguntas Rápidas",
+        ),
+        centerTitle: true,
+      ),
+
       body: loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child:
+                  CircularProgressIndicator(),
+            )
           : SingleChildScrollView(
+
               child: Column(
+
                 children: [
+
                   const SizedBox(height: 30),
-                  for (int i = 0; i < availableLevels.length; i++)
-                    _levelItem(context, availableLevels[i], i),
+
+                  for (int i = 0; i < levels.length; i++)
+                    _levelItem(context, i),
+
                   const SizedBox(height: 40),
                 ],
               ),
@@ -101,110 +139,145 @@ class _PreguntasRapidasMapState extends State<PreguntasRapidasMap> {
     );
   }
 
-  Widget _levelItem(BuildContext context, int level, int displayIndex) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final index = level - 1;
+  /// 🎮 ITEM DE NIVEL
+  Widget _levelItem(
+    BuildContext context,
+    int index,
+  ) {
 
+    final level = index + 1;
+
+    /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
-        starsMap[index] ?? GameProgress.getStars('preguntas_rapidas', index);
+        starsMap[index] ??
+        GameProgress.getStars(index);
 
-    final bool unlocked;
-
-    if (level == 1) {
-      unlocked = true;
-    } else {
-      final previousIndex = availableLevels[displayIndex - 1] - 1;
-
-      unlocked =
-          (starsMap[previousIndex] ??
-              GameProgress.getStars('preguntas_rapidas', previousIndex)) >
-          0;
-    }
+    /// 🔓 DESBLOQUEAR NIVEL
+    final bool unlocked =
+        level == 1 ||
+        (
+          starsMap[index - 1] ??
+          GameProgress.getStars(index - 1)
+        ) > 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+
+      padding:
+          const EdgeInsets.symmetric(
+        vertical: 20,
+      ),
+
       child: Column(
+
         children: [
-          if (displayIndex != 0)
+
+          /// 🛣️ CAMINO
+          if (index != 0)
+
             Container(
               width: 8,
               height: 50,
+
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.blueAccent.withValues(alpha: 0.35)
-                    : Colors.blue.shade200,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.blue.shade200,
+
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
               ),
             ),
+
+          /// 🎮 BOTÓN NIVEL
           GestureDetector(
+
             onTap: unlocked
                 ? () async {
-                    final tutorEmail = await TutorResolver.resolveTutorEmail();
 
-                    final rapidLevel = await _storyRepository
-                        .getEffectiveRapidLevel(
-                          tutorEmail: tutorEmail,
-                          level: level,
-                        );
-
-                    if (rapidLevel == null) {
-                      if (!mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No se pudo cargar el nivel'),
-                        ),
-                      );
-
-                      return;
-                    }
-
+                    /// ABRIR NIVEL
                     await Navigator.push(
+
                       context,
+
                       MaterialPageRoute(
-                        builder: (_) => PreguntasRapidasLevel(
-                          level: rapidLevel,
-                          availableLevels: availableLevels,
+                        builder: (_) =>
+                            PreguntasRapidasLevel(
+                          level: levels[index],
                         ),
                       ),
                     );
 
+                    /// 🔥 RECARGAR PROGRESO
                     await loadLevelsAndProgress();
                   }
                 : null,
+
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+
+              duration:
+                  const Duration(
+                milliseconds: 300,
+              ),
+
               width: 110,
               height: 110,
+
               decoration: BoxDecoration(
+
                 shape: BoxShape.circle,
+
                 gradient: LinearGradient(
+
                   colors: unlocked
-                      ? [Colors.blue, Colors.cyan]
-                      : [Colors.grey, Colors.black38],
+                      ? [
+                          Colors.blue,
+                          Colors.cyan,
+                        ]
+                      : [
+                          Colors.grey,
+                          Colors.black38,
+                        ],
                 ),
+
                 boxShadow: [
+
                   BoxShadow(
-                    color: unlocked ? Colors.cyanAccent : Colors.black26,
+                    color: unlocked
+                        ? Colors.cyanAccent
+                        : Colors.black26,
+
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),
                 ],
               ),
+
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+
                 children: [
+
                   Icon(
-                    unlocked ? Icons.quiz : Icons.lock,
+                    unlocked
+                        ? Icons.quiz
+                        : Icons.lock,
+
                     color: Colors.white,
                     size: 30,
                   ),
+
                   const SizedBox(height: 5),
+
                   Text(
-                    '$level',
+                    "$level",
+
                     style: const TextStyle(
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
+
                       color: Colors.white,
                     ),
                   ),
@@ -212,18 +285,55 @@ class _PreguntasRapidasMapState extends State<PreguntasRapidasMap> {
               ),
             ),
           ),
+
           const SizedBox(height: 10),
+
+          /// ⭐ ESTRELLAS GANADAS
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+
             children: List.generate(
+
               3,
+
               (star) => Icon(
-                star < stars ? Icons.star : Icons.star_border,
+
+                star < stars
+                    ? Icons.star
+                    : Icons.star_border,
+
                 color: Colors.amber,
                 size: 24,
               ),
             ),
           ),
+
+          /// 📖 TÍTULO DEL NIVEL
+          if (index < levels.length)
+            Padding(
+
+              padding:
+                  const EdgeInsets.only(
+                top: 10,
+              ),
+
+              child: Text(
+
+                levels[index].title,
+
+                style: const TextStyle(
+
+                  fontSize: 14,
+                  fontWeight:
+                      FontWeight.w500,
+                ),
+
+                textAlign:
+                    TextAlign.center,
+              ),
+            ),
         ],
       ),
     );

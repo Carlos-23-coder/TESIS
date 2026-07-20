@@ -1,210 +1,249 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../core/game_engine/game_progress.dart';
-import '../../../data/models/story_override_model.dart';
-import '../../../data/repositories/progress_repository.dart';
-import '../../../data/repositories/story_repository.dart';
-import '../../../data/services/tutor_resolver.dart';
+import '../../core/game_engine/game_progress.dart';
+import '../../data/repositories/progress_repository.dart';
 
 import 'idea_principal_level.dart';
 
 class IdeaPrincipalMap extends StatefulWidget {
+
   const IdeaPrincipalMap({super.key});
 
   @override
-  State<IdeaPrincipalMap> createState() => _IdeaPrincipalMapState();
+  State<IdeaPrincipalMap> createState() =>
+      _IdeaPrincipalMapState();
 }
 
-class _IdeaPrincipalMapState extends State<IdeaPrincipalMap> {
-  final ProgressRepository _progressRepository = ProgressRepository();
+class _IdeaPrincipalMapState
+    extends State<IdeaPrincipalMap> {
 
-  final StoryRepository _storyRepository = StoryRepository();
+  /// 🔥 REPOSITORIO
+  final ProgressRepository
+      _progressRepository =
+          ProgressRepository();
 
-  final user = FirebaseAuth.instance.currentUser;
+  /// 👤 USUARIO ACTUAL
+  final user =
+      FirebaseAuth.instance.currentUser;
 
+  /// ⭐ ESTRELLAS
   Map<int, int> starsMap = {};
-  List<int> availableLevels = [];
-  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    loadData();
+
+    loadProgress();
   }
 
-  Future<void> loadData() async {
-    if (user != null) {
-      await TutorResolver.ensureStudentLinkedToTutor(user!.email!);
-    }
+  /// 📚 CARGAR PROGRESO
+  Future<void> loadProgress() async {
 
-    final tutorEmail = await TutorResolver.resolveTutorEmail();
+    if (user == null) return;
 
-    final levels = await _storyRepository.listLevels(
-      tutorEmail: tutorEmail,
-      game: StoryGameType.ideaPrincipal,
+    final progress =
+        await _progressRepository
+            .getStudentProgress(
+      user!.email!,
     );
 
-    if (user != null) {
-      final progress = await _progressRepository.getStudentProgress(
-        user!.email!,
+    Map<int, int> loadedStars = {};
+
+    for (var item in progress) {
+
+      final int level =
+          item["level"] ?? 1;
+
+      final int stars =
+          item["stars"] ?? 0;
+
+      /// ⭐ GUARDAR EN MAPA
+      loadedStars[level - 1] = stars;
+
+      /// 💾 GUARDAR LOCAL
+      GameProgress.saveStars(
+        level - 1,
+        stars,
       );
-
-      GameProgress.clearGame('idea_principal');
-
-      final loadedStars = <int, int>{};
-
-      for (var item in progress) {
-        if (item['game'] != 'idea_principal') continue;
-
-        final int level = item['level'] ?? 1;
-        final int stars = ((item['stars'] ?? 0) as int).clamp(0, 3);
-        final levelIndex = level - 1;
-        final current = loadedStars[levelIndex] ?? 0;
-
-        if (stars > current) {
-          loadedStars[levelIndex] = stars;
-          GameProgress.saveStars('idea_principal', levelIndex, stars);
-        }
-      }
-
-      starsMap = loadedStars;
     }
 
-    if (!mounted) return;
-
     setState(() {
-      availableLevels = levels.map((item) => item.level).toList();
-      loading = false;
+      starsMap = loadedStars;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(title: const Text('Idea Principal'), centerTitle: true),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 30),
-                  for (int i = 0; i < availableLevels.length; i++)
-                    _levelItem(context, availableLevels[i], i),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
+
+      backgroundColor:
+          const Color(0xFFEAF6FF),
+
+      appBar: AppBar(
+        title: const Text(
+          "Idea Principal",
+        ),
+        centerTitle: true,
+      ),
+
+      body: SingleChildScrollView(
+
+        child: Column(
+
+          children: [
+
+            const SizedBox(height: 30),
+
+            for (int i = 0; i < 10; i++)
+              _levelItem(context, i),
+
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _levelItem(BuildContext context, int level, int displayIndex) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final index = level - 1;
+  Widget _levelItem(
+    BuildContext context,
+    int index,
+  ) {
 
+    final level = index + 1;
+
+    /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
-        starsMap[index] ?? GameProgress.getStars('idea_principal', index);
+        starsMap[index] ??
+        GameProgress.getStars(index);
 
-    final bool unlocked;
-
-    if (level == 1) {
-      unlocked = true;
-    } else {
-      final previousIndex = availableLevels[displayIndex - 1] - 1;
-
-      unlocked =
-          (starsMap[previousIndex] ??
-              GameProgress.getStars('idea_principal', previousIndex)) >
-          0;
-    }
+    /// 🔓 DESBLOQUEAR NIVEL
+    final bool unlocked =
+        level == 1 ||
+        (
+          starsMap[index - 1] ??
+          GameProgress.getStars(index - 1)
+        ) > 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+
+      padding:
+          const EdgeInsets.symmetric(
+        vertical: 20,
+      ),
+
       child: Column(
+
         children: [
-          if (displayIndex != 0)
+
+          /// 🛣️ CAMINO
+          if (index != 0)
+
             Container(
               width: 8,
               height: 50,
+
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.blueAccent.withValues(alpha: 0.35)
-                    : Colors.blue.shade200,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.blue.shade200,
+
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
               ),
             ),
+
+          /// 🎮 BOTÓN NIVEL
           GestureDetector(
+
             onTap: unlocked
                 ? () async {
-                    final tutorEmail = await TutorResolver.resolveTutorEmail();
 
-                    final effectiveLevel = await _storyRepository
-                        .getEffectiveIdeaLevel(
-                          tutorEmail: tutorEmail,
-                          level: level,
-                        );
-
-                    if (effectiveLevel == null) {
-                      if (!mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No se pudo cargar el nivel'),
-                        ),
-                      );
-
-                      return;
-                    }
-
+                    /// ABRIR NIVEL
                     await Navigator.push(
+
                       context,
+
                       MaterialPageRoute(
-                        builder: (_) => IdeaPrincipalLevel(
-                          level: effectiveLevel,
-                          availableLevels: availableLevels,
+                        builder: (_) =>
+                            IdeaPrincipalLevel(
+                          levelIndex: index,
                         ),
                       ),
                     );
 
-                    await loadData();
+                    /// 🔥 RECARGAR PROGRESO
+                    await loadProgress();
                   }
                 : null,
+
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+
+              duration:
+                  const Duration(
+                milliseconds: 300,
+              ),
+
               width: 110,
               height: 110,
+
               decoration: BoxDecoration(
+
                 shape: BoxShape.circle,
+
                 gradient: LinearGradient(
+
                   colors: unlocked
-                      ? [Colors.blue, Colors.cyan]
-                      : [Colors.grey, Colors.black38],
+                      ? [
+                          Colors.blue,
+                          Colors.cyan,
+                        ]
+                      : [
+                          Colors.grey,
+                          Colors.black38,
+                        ],
                 ),
+
                 boxShadow: [
+
                   BoxShadow(
-                    color: unlocked ? Colors.cyanAccent : Colors.black26,
+                    color: unlocked
+                        ? Colors.cyanAccent
+                        : Colors.black26,
+
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),
                 ],
               ),
+
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+
                 children: [
+
                   Icon(
-                    unlocked ? Icons.star : Icons.lock,
+                    unlocked
+                        ? Icons.star
+                        : Icons.lock,
+
                     color: Colors.white,
                     size: 30,
                   ),
+
                   const SizedBox(height: 5),
+
                   Text(
-                    '$level',
+                    "$level",
+
                     style: const TextStyle(
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
+
                       color: Colors.white,
                     ),
                   ),
@@ -212,13 +251,25 @@ class _IdeaPrincipalMapState extends State<IdeaPrincipalMap> {
               ),
             ),
           ),
+
           const SizedBox(height: 10),
+
+          /// ⭐ ESTRELLAS GANADAS
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+
             children: List.generate(
+
               3,
+
               (star) => Icon(
-                star < stars ? Icons.star : Icons.star_border,
+
+                star < stars
+                    ? Icons.star
+                    : Icons.star_border,
+
                 color: Colors.amber,
                 size: 24,
               ),

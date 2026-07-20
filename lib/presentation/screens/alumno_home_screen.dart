@@ -2,8 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/progress_repository.dart';
-import '../../data/services/local_session_service.dart';
-import '../../core/accessibility/accessibility_controller.dart';
 
 import '../../games/idea_principal/idea_principal_map.dart';
 import '../../games/preguntas_rapidas/preguntas_rapidas_map.dart';
@@ -13,80 +11,83 @@ import '../profile/student_profile_screen.dart';
 import 'student_rewards_screen.dart';
 
 class AlumnoHomeScreen extends StatelessWidget {
-  const AlumnoHomeScreen({super.key});
 
-  void _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    LocalSessionService.instance.clear();
+  const AlumnoHomeScreen({
+    super.key,
+  });
 
-    if (!context.mounted) return;
+  void _logout(BuildContext context) {
 
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+
+      context,
+
+      '/',
+
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final highContrast = AccessibilityController.instance.highContrast;
-    final headerColor = highContrast
-        ? (isDark ? const Color(0xFFFFD600) : Colors.black)
-        : (isDark ? const Color(0xFF1D4ED8) : Colors.blueAccent);
-    final headerTextColor = highContrast && isDark ? Colors.black : Colors.white;
-    final headerSubtextColor = highContrast && isDark
-        ? Colors.black87
-        : Colors.white70;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+
+      backgroundColor:
+          const Color(0xFFEAF6FF),
 
       appBar: AppBar(
+
         automaticallyImplyLeading: false,
 
         elevation: 0,
 
-        backgroundColor: headerColor,
+        backgroundColor: Colors.blueAccent,
 
-        title: const Text("LectoPlay"),
+        title: const Text(
+          "LectoPlay",
+        ),
 
         actions: [
-          IconButton(
-            tooltip: 'Accesibilidad',
-
-            icon: const Icon(Icons.accessibility_new),
-
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
 
           /// 🎁 RECOMPENSAS
           IconButton(
-            icon: const Icon(Icons.card_giftcard),
+
+            icon: const Icon(
+              Icons.card_giftcard,
+            ),
 
             onPressed: () async {
-              final progressRepo = ProgressRepository();
 
-              final currentUser = FirebaseAuth.instance.currentUser;
+              final progressRepo =
+                  ProgressRepository();
+
+              final User? currentUser =
+                FirebaseAuth.instance.currentUser;
 
               final String userId =
-                  currentUser?.email ??
-                  LocalSessionService.instance.email ??
-                  "";
+                currentUser?.email ?? "";
 
               if (userId.isEmpty) {
-                return;
+              return;
               }
 
-              final stars = await progressRepo.getTotalStars(userId);
-
-              if (!context.mounted) return;
+              final stars =
+                  await progressRepo
+                      .getTotalStars(
+                userId,
+              );
 
               Navigator.push(
+
                 context,
 
                 MaterialPageRoute(
-                  builder: (_) => StudentRewardsScreen(userStars: stars),
+
+                  builder: (_) =>
+                      StudentRewardsScreen(
+                    userStars: stars,
+                  ),
                 ),
               );
             },
@@ -94,84 +95,132 @@ class AlumnoHomeScreen extends StatelessWidget {
 
           /// 👤 PERFIL
           GestureDetector(
+
             onTap: () {
+
               Navigator.push(
+
                 context,
 
-                MaterialPageRoute(builder: (_) => const StudentProfileScreen()),
+                MaterialPageRoute(
+
+                  builder: (_) =>
+                      const StudentProfileScreen(),
+                ),
               );
             },
 
             child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+
+              padding:
+                  EdgeInsets.symmetric(
+                horizontal: 10,
+              ),
 
               child: CircleAvatar(
+
                 radius: 18,
 
-                backgroundColor: Colors.white,
+                backgroundColor:
+                    Colors.white,
 
-                child: Icon(Icons.person, color: Colors.blue),
+                child: Icon(
+                  Icons.person,
+                  color: Colors.blue,
+                ),
               ),
             ),
           ),
 
           /// 🚪 LOGOUT
           IconButton(
-            icon: const Icon(Icons.logout),
 
-            onPressed: () => _logout(context),
+            icon: const Icon(
+              Icons.logout,
+            ),
+
+            onPressed: () =>
+                _logout(context),
           ),
         ],
       ),
 
       body: Column(
+
         children: [
+
           /// 🔵 HEADER
           Container(
+
             width: double.infinity,
 
-            padding: const EdgeInsets.all(25),
+            padding:
+                const EdgeInsets.all(
+              25,
+            ),
 
-            decoration: BoxDecoration(
-              color: headerColor,
+            decoration:
+                const BoxDecoration(
 
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
+              color: Colors.blueAccent,
 
-                bottomRight: Radius.circular(30),
+              borderRadius:
+                  BorderRadius.only(
+
+                bottomLeft:
+                    Radius.circular(30),
+
+                bottomRight:
+                    Radius.circular(30),
               ),
             ),
 
-            child: Column(
+            child: const Column(
+
               children: [
+
                 Text(
+
                   "¡Aprendamos jugando!",
 
                   style: TextStyle(
-                    color: headerTextColor,
+
+                    color: Colors.white,
 
                     fontSize: 26,
 
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
 
-                SizedBox(height: 8),
+                SizedBox(
+                  height: 8,
+                ),
 
                 Text(
+
                   "Completa niveles y gana estrellas ⭐",
 
-                  style: TextStyle(color: headerSubtextColor),
+                  style: TextStyle(
+                    color: Colors.white70,
+                  ),
                 ),
               ],
             ),
           ),
 
           Expanded(
+
             child: Padding(
-              padding: const EdgeInsets.all(20),
+
+              padding:
+                  const EdgeInsets.all(
+                20,
+              ),
 
               child: GridView.count(
+
                 crossAxisCount: 2,
 
                 crossAxisSpacing: 15,
@@ -181,11 +230,26 @@ class AlumnoHomeScreen extends StatelessWidget {
                 childAspectRatio: 1.1,
 
                 children: [
+
                   /// IDEA PRINCIPAL
-                  _gameCard(context, Icons.lightbulb, "Idea\nPrincipal"),
+                  _gameCard(
+
+                    context,
+
+                    Icons.lightbulb,
+
+                    "Idea\nPrincipal",
+                  ),
 
                   /// PREGUNTAS RÁPIDAS
-                  _gameCard(context, Icons.timer, "Preguntas\nRápidas"),
+                  _gameCard(
+
+                    context,
+
+                    Icons.timer,
+
+                    "Preguntas\nRápidas",
+                  ),
                 ],
               ),
             ),
@@ -196,97 +260,138 @@ class AlumnoHomeScreen extends StatelessWidget {
   }
 
   /// 🎮 CARD JUEGO
-  Widget _gameCard(BuildContext context, IconData icon, String title) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final highContrast = AccessibilityController.instance.highContrast;
+  Widget _gameCard(
+
+    BuildContext context,
+
+    IconData icon,
+
+    String title,
+
+  ) {
 
     return GestureDetector(
+
       onTap: () {
-        if (title == "Idea\nPrincipal") {
+
+        if (title ==
+            "Idea\nPrincipal") {
+
           Navigator.push(
+
             context,
 
-            MaterialPageRoute(builder: (_) => const IdeaPrincipalMap()),
+            MaterialPageRoute(
+
+              builder: (_) =>
+                  const IdeaPrincipalMap(),
+            ),
           );
-        } else if (title == "Preguntas\nRápidas") {
+
+        } else if (title ==
+            "Preguntas\nRápidas") {
+
           Navigator.push(
+
             context,
 
-            MaterialPageRoute(builder: (_) => const PreguntasRapidasMap()),
+            MaterialPageRoute(
+
+              builder: (_) =>
+                  const PreguntasRapidasMap(),
+            ),
           );
+
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+
             const SnackBar(
-              content: Text("Este juego estará disponible próximamente 😊"),
+
+              content: Text(
+
+                "Este juego estará disponible próximamente 😊",
+              ),
             ),
           );
         }
       },
 
       child: Container(
+
         decoration: BoxDecoration(
-          color: highContrast
-              ? (isDark ? Colors.black : Colors.white)
-              : theme.cardColor,
 
-          borderRadius: BorderRadius.circular(22),
+          color: Colors.white,
 
-          border: highContrast
-              ? Border.all(
-                  color: isDark ? Colors.white : Colors.black,
-                  width: 2,
-                )
-              : null,
+          borderRadius:
+              BorderRadius.circular(
+            22,
+          ),
 
-          boxShadow: [
+          boxShadow: const [
+
             BoxShadow(
-              color: highContrast
-                  ? (isDark ? Colors.white38 : Colors.black38)
-                  : Colors.black12,
-              blurRadius: highContrast ? 10 : 6,
-              offset: const Offset(0, 3),
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 3),
             ),
           ],
         ),
 
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+
+          mainAxisAlignment:
+              MainAxisAlignment.center,
 
           children: [
+
             Container(
-              padding: const EdgeInsets.all(15),
+
+              padding:
+                  const EdgeInsets.all(
+                15,
+              ),
 
               decoration: BoxDecoration(
-                color: highContrast
-                    ? (isDark ? const Color(0xFFFFD600) : Colors.black)
-                    : (isDark
-                          ? Colors.blueAccent.withValues(alpha: 0.18)
-                          : Colors.blue.shade50),
 
-                borderRadius: BorderRadius.circular(18),
+                color:
+                    Colors.blue.shade50,
+
+                borderRadius:
+                    BorderRadius.circular(
+                  18,
+                ),
               ),
 
               child: Icon(
+
                 icon,
+
                 size: 40,
-                color: highContrast
-                    ? (isDark ? Colors.black : Colors.white)
-                    : Colors.blueAccent,
+
+                color:
+                    Colors.blueAccent,
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             Text(
+
               title,
 
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
 
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: const TextStyle(
+
                 fontSize: 16,
 
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
           ],

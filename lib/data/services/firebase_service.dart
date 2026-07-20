@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
-import 'local_session_service.dart';
-import 'tutor_resolver.dart';
 
 class FirebaseService {
 
@@ -25,7 +22,7 @@ class FirebaseService {
     required String password,
     required String pin,
   }) async {
-    email = email.trim().toLowerCase();
+
     /// 🔐 CREAR EN FIREBASE AUTH
     await _auth
         .createUserWithEmailAndPassword(
@@ -34,16 +31,13 @@ class FirebaseService {
     );
 
     /// 💾 GUARDAR DATOS EN FIRESTORE
-    final normalizedEmail =
-    email.trim().toLowerCase();
+    await _db
+        .collection('users')
+        .doc(email)
+        .set({
 
-    if (role != 'Alumno') {
-      throw Exception('Solo se pueden registrar alumnos.');
-    }
-
-    final userData = <String, dynamic>{
       'username': username,
-      'email': normalizedEmail,
+      'email': email,
       'role': role,
 
       /// ⚠️ SOLO PARA TU PROYECTO EDUCATIVO
@@ -52,60 +46,8 @@ class FirebaseService {
       'password': password,
       'pin': pin,
 
-      'createdAt': FieldValue.serverTimestamp(),
-    };
-
-    if (role == 'Alumno') {
-      userData['tutorEmail'] = TutorResolver.defaultTutorEmail;
-    }
-
-    await _db.collection('users').doc(normalizedEmail).set(userData);
-  }
-
-  /// CREAR TUTOR DESDE EL PANEL ADMIN
-  /// Usa una app secundaria para no reemplazar la sesion actual del admin.
-  Future<void> createTutorByAdmin({
-    required String email,
-    required String username,
-    required String password,
-    required String pin,
-  }) async {
-    final normalizedEmail =
-        email.trim().toLowerCase();
-
-    FirebaseApp? secondaryApp;
-
-    try {
-      secondaryApp = await Firebase.initializeApp(
-        name: 'AdminTutorCreation',
-        options: Firebase.app().options,
-      );
-    } on FirebaseException catch (e) {
-      if (e.code == 'duplicate-app') {
-        secondaryApp = Firebase.app('AdminTutorCreation');
-      } else {
-        rethrow;
-      }
-    }
-
-    final secondaryAuth =
-        FirebaseAuth.instanceFor(app: secondaryApp);
-
-    await secondaryAuth.createUserWithEmailAndPassword(
-      email: normalizedEmail,
-      password: password,
-    );
-
-    await secondaryAuth.signOut();
-
-    await _db.collection('users').doc(normalizedEmail).set({
-      'username': username,
-      'email': normalizedEmail,
-      'role': 'Tutor',
-      'password': password,
-      'pin': pin,
-      'createdAt': FieldValue.serverTimestamp(),
-      'createdBy': _auth.currentUser?.email ?? 'admin-local',
+      'createdAt':
+          FieldValue.serverTimestamp(),
     });
   }
 
@@ -124,12 +66,6 @@ class FirebaseService {
 
   }) async {
 
-      identifier = identifier.trim();
-
-      if (identifier.contains("@")) {
-        identifier = identifier.toLowerCase();
-      }
-
     try {
 
       /// 📱 INTENTA LOGIN OFFLINE (SQLITE)
@@ -141,28 +77,9 @@ class FirebaseService {
       );
 
       if (offlineResult != null) {
-        LocalSessionService.instance.setUser(offlineResult);
-
-        print("✅ Login OFFLINE exitoso");
-
-        try {
-
-          await _auth.signInWithEmailAndPassword(
-            email: offlineResult["email"],
-            password: offlineResult["password"],
-          );
-
-          print(
-            "✅ FirebaseAuth sincronizado desde login principal",
-          );
-
-        } catch (e) {
-
-          print(
-            "❌ Error iniciando FirebaseAuth: $e",
-          );
-        }
-
+        print(
+          "✅ Login OFFLINE exitoso",
+        );
         return offlineResult;
       }
 
@@ -171,17 +88,11 @@ class FirebaseService {
         "📶 Intentando login con Firebase...",
       );
 
-      final firebaseResult = await _loginFirebase(
+      return await _loginFirebase(
         identifier: identifier,
         passwordOrPin: passwordOrPin,
         role: role,
       );
-
-      if (firebaseResult != null) {
-        LocalSessionService.instance.setUser(firebaseResult);
-      }
-
-      return firebaseResult;
 
     } catch (e) {
 
@@ -227,8 +138,6 @@ class FirebaseService {
       }
 
       final userData = results.first;
-        print("========== LOGIN SQLITE ==========");
-        print(userData);
 
       final String savedPassword =
           userData["password"] ?? "";
@@ -238,34 +147,17 @@ class FirebaseService {
 
       /// 🔐 VALIDAR PASSWORD O PIN
       final bool validAccess =
-        passwordOrPin == savedPassword ||
-        passwordOrPin == savedPin;
 
-        if (!validAccess) {
-          return null;
-        }
+          passwordOrPin == savedPassword ||
 
-        /// 🔥 INICIAR SESIÓN EN FIREBASE AUTH
-        try {
+          passwordOrPin == savedPin;
 
-          await _auth.signInWithEmailAndPassword(
-            email: userData["email"],
-            password: savedPassword,
-          );
+      if (!validAccess) {
+        return null;
+      }
 
-          print(
-            "✅ FirebaseAuth sincronizado desde login offline",
-          );
-
-        } catch (e) {
-
-          print(
-            "⚠️ Error FirebaseAuth: $e",
-          );
-        }
-
-        /// ✅ RETORNAR DATOS DEL USUARIO
-        return userData;
+      /// ✅ RETORNAR DATOS DEL USUARIO
+      return userData;
 
     } catch (e) {
 
@@ -276,7 +168,6 @@ class FirebaseService {
       return null;
     }
   }
-
 
   /// 🌐 LOGIN CON FIREBASE (ONLINE)
   Future<Map<String, dynamic>?> _loginFirebase({
@@ -374,7 +265,6 @@ class FirebaseService {
   Future<void> logout() async {
 
     await _auth.signOut();
-    LocalSessionService.instance.clear();
   }
 
   /// 👤 USUARIO ACTUAL
@@ -409,7 +299,7 @@ class FirebaseService {
 
         final userRef =
             _db.collection('users')
-                .doc(email.toLowerCase());
+                .doc(email);
 
         await userRef
             .collection('progress')
