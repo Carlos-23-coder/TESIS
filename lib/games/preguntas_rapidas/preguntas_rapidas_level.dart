@@ -238,6 +238,7 @@ class _PreguntasRapidasLevelState
     /// 💾 GUARDAR PROGRESO
     /// ⭐ GUARDADO LOCAL
     GameProgress.saveStars(
+      'preguntas_rapidas',
       widget.level.level - 1,
       earnedStars,
     );

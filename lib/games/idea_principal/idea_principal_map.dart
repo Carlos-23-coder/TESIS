@@ -63,6 +63,7 @@ class _IdeaPrincipalMapState
 
       /// 💾 GUARDAR LOCAL
       GameProgress.saveStars(
+        'idea_principal',
         level - 1,
         stars,
       );
@@ -116,14 +117,14 @@ class _IdeaPrincipalMapState
     /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
         starsMap[index] ??
-        GameProgress.getStars(index);
+      GameProgress.getStars('idea_principal', index);
 
     /// 🔓 DESBLOQUEAR NIVEL
     final bool unlocked =
         level == 1 ||
         (
           starsMap[index - 1] ??
-          GameProgress.getStars(index - 1)
+          GameProgress.getStars('idea_principal', index - 1)
         ) > 0;
 
     return Padding(

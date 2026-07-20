@@ -86,6 +86,7 @@ class _PreguntasRapidasMapState
 
         /// 💾 GUARDAR LOCAL
         GameProgress.saveStars(
+          'preguntas_rapidas',
           level - 1,
           stars,
         );
@@ -150,14 +151,14 @@ class _PreguntasRapidasMapState
     /// ⭐ ESTRELLAS DEL NIVEL
     final stars =
         starsMap[index] ??
-        GameProgress.getStars(index);
+      GameProgress.getStars('preguntas_rapidas', index);
 
     /// 🔓 DESBLOQUEAR NIVEL
     final bool unlocked =
         level == 1 ||
         (
           starsMap[index - 1] ??
-          GameProgress.getStars(index - 1)
+          GameProgress.getStars('preguntas_rapidas', index - 1)
         ) > 0;
 
     return Padding(
