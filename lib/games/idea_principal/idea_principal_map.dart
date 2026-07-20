@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/game_engine/game_progress.dart';
 import '../../data/repositories/progress_repository.dart';
+import '../../data/repositories/story_repository.dart';
+import '../../data/services/tutor_resolver.dart';
 
 import 'idea_principal_level.dart';
 
@@ -23,7 +25,12 @@ class _IdeaPrincipalMapState
       _progressRepository =
           ProgressRepository();
 
-  /// 👤 USUARIO ACTUAL
+  /// � STORY REPOSITORY
+  final StoryRepository
+      _storyRepository =
+          StoryRepository();
+
+  /// �👤 USUARIO ACTUAL
   final user =
       FirebaseAuth.instance.currentUser;
 
@@ -161,6 +168,18 @@ class _IdeaPrincipalMapState
             onTap: unlocked
                 ? () async {
 
+                    /// OBTENER NIVEL
+                    final tutorEmail = await TutorResolver.resolveTutorEmail();
+                    final effectiveLevel = await _storyRepository.getEffectiveIdeaLevel(
+                      tutorEmail: tutorEmail,
+                      level: level,
+                    );
+
+                    if (!mounted || effectiveLevel == null) return;
+
+                    /// CREAR LISTA DE NIVELES DISPONIBLES
+                    final availableLevels = List.generate(10, (i) => i + 1);
+
                     /// ABRIR NIVEL
                     await Navigator.push(
 
@@ -169,7 +188,8 @@ class _IdeaPrincipalMapState
                       MaterialPageRoute(
                         builder: (_) =>
                             IdeaPrincipalLevel(
-                          levelIndex: index,
+                          level: effectiveLevel,
+                          availableLevels: availableLevels,
                         ),
                       ),
                     );

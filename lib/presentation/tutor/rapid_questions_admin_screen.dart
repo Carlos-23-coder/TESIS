@@ -209,7 +209,7 @@ class _RapidQuestionsAdminScreenState
 
       uploadedImageUrl =
           await _repository
-              .saveImageLocally(
+              .uploadImage(
         levelNumber,
         selectedImage!,
       );

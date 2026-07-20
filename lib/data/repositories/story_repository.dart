@@ -8,7 +8,6 @@ import '../services/local_image_service.dart';
 import '../../games/preguntas_rapidas/preguntas_rapidas_data.dart';
 import '../database/database_helper.dart';
 import '../models/rapid_question_model.dart';
-import '../repositories/progress_repository.dart';
 import '../models/story_override_model.dart';
 
 class StoryRepository {
@@ -395,7 +394,7 @@ class StoryRepository {
           .delete();
     } catch (_) {}
   }
-
+ 
   Future<void> deleteLevel({
     required String tutorEmail,
     required String game,
@@ -408,13 +407,6 @@ class StoryRepository {
       game: game,
       level: level,
     );
-
-    if (!_hasDefaultLevel(game, level)) {
-      await ProgressRepository().deleteProgressForLevel(
-        game: game,
-        level: level,
-      );
-    }
   }
 
   Future<void> cacheTutorStories(String tutorEmail) async {

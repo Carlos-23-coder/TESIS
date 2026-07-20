@@ -11,7 +11,7 @@ class CreateTutorScreen extends StatefulWidget {
   @override
   State<CreateTutorScreen> createState() => _CreateTutorScreenState();
 }
-
+ 
 class _CreateTutorScreenState extends State<CreateTutorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
@@ -70,11 +70,12 @@ class _CreateTutorScreenState extends State<CreateTutorScreen> {
       final password = _passwordController.text.trim();
       final pin = _pinController.text.trim();
 
-      await _firebaseService.createTutorByAdmin(
+      await _firebaseService.createUser(
         email: email,
         username: username,
         password: password,
         pin: pin,
+        role: 'Tutor',
       );
 
       await _userRepository.createUserFromAdmin(
