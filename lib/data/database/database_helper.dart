@@ -37,7 +37,7 @@ class DatabaseHelper {
 
       path,
 
-      version: 4,
+      version: 5,
 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
@@ -116,6 +116,24 @@ class DatabaseHelper {
         title TEXT NOT NULL,
         story TEXT,
         imageUrl TEXT,
+        date TEXT,
+        synced INTEGER DEFAULT 0
+      )
+
+    ''');
+
+    /// 📖 TABLA DE IDEA PRINCIPAL OFFLINE
+    await db.execute('''
+
+      CREATE TABLE idea_principal (
+
+        level INTEGER PRIMARY KEY,
+        story TEXT NOT NULL,
+        question TEXT NOT NULL,
+        options TEXT NOT NULL,
+        correctAnswer INTEGER NOT NULL,
+        imageUrl TEXT,
+        tutorEmail TEXT,
         date TEXT,
         synced INTEGER DEFAULT 0
       )
@@ -214,6 +232,32 @@ class DatabaseHelper {
     } catch (e) {
       print(
         "Tabla rapid_questions ya existe: $e",
+      );
+    }
+
+    /// CREAR TABLA DE IDEA PRINCIPAL SI NO EXISTE
+    try {
+
+      await db.execute('''
+
+        CREATE TABLE IF NOT EXISTS idea_principal (
+
+          level INTEGER PRIMARY KEY,
+          story TEXT NOT NULL,
+          question TEXT NOT NULL,
+          options TEXT NOT NULL,
+          correctAnswer INTEGER NOT NULL,
+          imageUrl TEXT,
+          tutorEmail TEXT,
+          date TEXT,
+          synced INTEGER DEFAULT 0
+        )
+
+      ''');
+
+    } catch (e) {
+      print(
+        "Tabla idea_principal ya existe: $e",
       );
     }
 
